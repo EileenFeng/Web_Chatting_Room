@@ -12,6 +12,7 @@
 import os
 import sqlite3
 import sys
+import bcrypt
 
 from flask import Flask
 from flask import redirect
@@ -21,6 +22,7 @@ from flask import session
 from flask import render_template
 from flask import send_from_directory
 from jinja2 import Template
+from bcrypt import hashpw, gensalt
 
 app = Flask(__name__)
 
@@ -76,17 +78,34 @@ def get_user_from_username_and_password(username, password):
     conn = connect_db()
     cur = conn.cursor()
     print(username,password)
-    cur.execute('SELECT id, username FROM `user` WHERE username=\'%s\' AND password=\'%s\'' % (username, password))
+    #cur.execute('SELECT id, username FROM `user` WHERE username=\'%s\' AND password=\'%s\'' % (username, password))
+    '''
+    cur.execute('SELECT id, username FROM `user` WHERE username= ? AND password= ? ', (username, password))
     row = cur.fetchone()
     conn.commit()
     conn.close()
     print(row)
     return {'id': row[0], 'username': row[1]} if row is not None else None
+    '''
+    cur.execute('SELECT id, password FROM `user` WHERE username= ?', (username,))
+    row = cur.fetchone()
+    print (row)
+    verify_pw = row[1].encode()
+    try:
+        if bcrypt.checkpw(password.encode(), verify_pw):
+            return {'id': row[0], 'username': username}
+        else:
+            return None
+    except Exception, e:
+        return None
 
 def create_user(username, password):
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('INSERT INTO `user` VALUES(NULL,?,?);', (username, password))
+    encrypted_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    print("encrypted")
+    print(encrypted_pw)
+    cur.execute('INSERT INTO `user` VALUES(NULL,?,?);', (username, encrypted_pw))
     row = cur.fetchone()
     conn.commit()
     conn.close()
@@ -135,56 +154,71 @@ def user_delete_chat_of_id(uid, tid):
     conn.close()
 
 def render_login_page():
-    return '''
-<div style="width: 500px; margin: 80px auto;">
-<center><h1> Welcome to FakeSquirrelChat! </h1></center>
-<form method="POST" style="margin: 60px auto; width: 140px;">
-    <p>Username: <input name="username" type="text" /></p>
-    <p>Password: <input name="password" type="password" /></p>
-    <p><input value="Login" type="submit" /></p>
-</form>
-<a href="/create_account">Create account</a>
-</div>
-    '''
+    return render_template('login.html')
 
 def render_create_account():
-    return '''
-<div style="width: 500px; margin: 80px auto;">
-<center><h1> Welcome to FakeSquirrelChat! </h1></center>
-<p>Select your username and password</p>
-<form method="POST" style="margin: 60px auto; width: 140px;">
-    <p>Username: <input name="username" type="text" /></p>
-    <p>Password: <input name="password" type="password" /></p>
-    <p><input value="Login" type="submit" /></p>
-</form>
-</div>
-'''
+    return render_template('create_acc.html')
 
-@app.route('/changepassword/<newpassword>')
-def changepassword(newpassword):
-    conn = connect_db()
-    cur = conn.cursor()
-    cur.execute('UPDATE `user` SET password=\'%s\' WHERE id=\'%d\'' % (newpassword, session['uid']))
-    conn.commit()
-    conn.close()
-    return "success", 200
+def render_change_pwd():
+    return render_template('change_pwd.html')
 
-@app.route('/getpassword')
-def getpassword():
-    print("here123123")
-    if 'uid' in session:
+@app.route('/change_pwd', methods=['GET', 'POST'])
+def change_pwd():
+    if request.method == 'GET':
+        return render_change_pwd()
+    elif request.method == 'POST':
+        username = request.form['username']
+        old_pwd = request.form['old_password']
+        new_pwd = request.form['new_password']
+    
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute('SELECT password FROM `user` WHERE id=\'%d\'' % (session['uid']))
-        row = cur.fetchone()
+        cur.execute('SELECT password FROM `user` WHERE username=\'%s\'' % username)
+        db_pwd = cur.fetchone()[0].encode()
+        #TO-DO: add encryption here
+        #encrypted_oldpwd = bcrypt.hashpw(old_pwd.encode(), bcrypt.gensalt())
+        encrypted_newpwd = bcrypt.hashpw(new_pwd.encode(), bcrypt.gensalt())
+
+        try:
+            if bcrypt.checkpw(old_pwd.encode(), db_pwd):
+                cur.execute('UPDATE `user` SET password=\'%s\' WHERE username=\'%s\'' % (encrypted_newpwd, username))            
+            else:
+                conn.commit()
+                conn.close()
+                return render_change_pwd()
+        except Exception, e:
+            conn.commit()
+            conn.close()
+            return render_change_pwd()
         conn.commit()
         conn.close()
-        print("----")
-        print(row)
-        print("----")
-        return jsonify({'password': row[0]})
-    else:
-        return jsonify("Not logged in")
+        return redirect('/')
+
+# @app.route('/changepassword/<newpassword>')
+# def changepassword(newpassword):
+#     conn = connect_db()
+#     cur = conn.cursor()
+#     cur.execute('UPDATE `user` SET password=\'%s\' WHERE id=\'%d\'' % (newpassword, session['uid']))
+#     conn.commit()
+#     conn.close()
+#     return "success", 200
+
+# @app.route('/getpassword')
+# def getpassword():
+#     print("here123123")
+#     if 'uid' in session:
+#         conn = connect_db()
+#         cur = conn.cursor()
+#         cur.execute('SELECT password FROM `user` WHERE id=\'%d\'' % (session['uid']))
+#         row = cur.fetchone()
+#         conn.commit()
+#         conn.close()
+#         print("----")
+#         print(row)
+#         print("----")
+#         return jsonify({'password': row[0]})
+#     else:
+#         return jsonify("Not logged in")
 
 @app.route('/chats', methods=['GET'])
 def chats():
@@ -203,6 +237,10 @@ def chats_from(n):
 def render_home_page(uid):
     user = get_user_from_id(uid)
     return render_template('chats.html', uid=uid, user=user['username'])
+
+def render_channel_table(uid):
+    user = get_user_from_id(uid)
+    return render_template('table.html', uid=uid, user=user['username'])
 
 def do_login(user):
     if user is not None:
@@ -225,7 +263,8 @@ def create_account():
 @app.route('/')
 def index():
     if 'uid' in session:
-        return render_home_page(session['uid'])
+        #return render_home_page(session['uid'])
+        return render_channel_table(session['uid'])
     return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -233,6 +272,7 @@ def login():
     if request.method == 'GET':
         return render_login_page()
     elif request.method == 'POST':
+        print("IN LOGIN")
         username = request.form['username']
         password = request.form['password']
         user = get_user_from_username_and_password(username, password)
