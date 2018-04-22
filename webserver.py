@@ -44,19 +44,36 @@ def create_tables():
             CREATE TABLE IF NOT EXISTS user(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username VARCHAR(32),
-            password VARCHAR(32)
+            password VARCHAR(32),
+            channels TEXT,
+            blocked TEXT,
+            banned TEXT,
+            uploadedfiles TEXT,
+            channeladmin TEXT
             )''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS channels(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        channelname VARCHAR(32),
+        username VARCHAR(32),
+        admin VARCHAR(32),
+        topics TEXT,
+        banned TEXT, 
+        filenames TEXT
+        )''')
     cur.execute('''
         CREATE TABLE IF NOT EXISTS chats(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        channelname VARCHAR(32),
         user_id INTEGER,
-        content TEXT,
+        context TEXT,
         FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
         )''')
     conn.commit()
     conn.close()
 
 def init_data():
+    '''
     users = [
         ('user1', '123456'),
         ('user2', '123456')
@@ -67,10 +84,11 @@ def init_data():
         (2, 'Here\'s my third post'),
         (2, 'Last post here.')
     ]
+    '''
     conn = connect_db()
     cur = conn.cursor()
-    cur.executemany('INSERT INTO `user` VALUES(NULL,?,?)', users)
-    cur.executemany('INSERT INTO `chats` VALUES(NULL,?,?)', lines)
+    #cur.executemany('INSERT INTO `user` VALUES(NULL,?,?)', users)
+    #cur.executemany('INSERT INTO `chats` VALUES(NULL,?,?)', lines)
     conn.commit()
     conn.close()
 
@@ -91,7 +109,6 @@ def get_user_from_username_and_password(username, password):
     print(row)
     return {'id': row[0], 'username': row[1]} if row is not None else None
     '''
-    row = cur.fetchone()
     cur.execute('SELECT id, password FROM `user` WHERE username= ?', (username,))
     row = cur.fetchall()
     print (row)
@@ -109,7 +126,7 @@ def create_user(username, password):
     encrypted_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     print("encrypted")
     print(encrypted_pw)
-    cur.execute('INSERT INTO `user` VALUES(NULL,?,?);', (username, encrypted_pw))
+    cur.execute('INSERT INTO `user` VALUES(NULL,?,?, NULL, NULL, NULL, NULL, NULL);', (username, encrypted_pw))
     row = cur.fetchone()
     conn.commit()
     conn.close()
