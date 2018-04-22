@@ -12,6 +12,11 @@
 import os
 import sqlite3
 import sys
+import time
+import bcrypt
+import ssl
+
+from bcrypt import hashpw, gensalt 
 
 from flask import Flask
 from flask import redirect
@@ -21,6 +26,7 @@ from flask import session
 from flask import render_template
 from flask import send_from_directory
 from jinja2 import Template
+from jinja2 import utils
 
 app = Flask(__name__)
 
@@ -76,17 +82,34 @@ def get_user_from_username_and_password(username, password):
     conn = connect_db()
     cur = conn.cursor()
     print(username,password)
-    cur.execute('SELECT id, username FROM `user` WHERE username=\'%s\' AND password=\'%s\'' % (username, password))
+    #cur.execute('SELECT id, username FROM `user` WHERE username=\'%s\' AND password=\'%s\'' % (username, password))
+    '''
+    cur.execute('SELECT id, username FROM `user` WHERE username= ? AND password= ? ', (username, password))
     row = cur.fetchone()
     conn.commit()
     conn.close()
     print(row)
     return {'id': row[0], 'username': row[1]} if row is not None else None
+    '''
+    row = cur.fetchone()
+    cur.execute('SELECT id, password FROM `user` WHERE username= ?', (username,))
+    row = cur.fetchall()
+    print (row)
+    varify_pw = row[0][1].encode()
+    if bcrypt.checkpw(password.encode(), varify_pw):
+        return {'id': row[0][0], 'username': username}
+    else:
+        return None
+
+
 
 def create_user(username, password):
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('INSERT INTO `user` VALUES(NULL,?,?);', (username, password))
+    encrypted_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    print("encrypted")
+    print(encrypted_pw)
+    cur.execute('INSERT INTO `user` VALUES(NULL,?,?);', (username, encrypted_pw))
     row = cur.fetchone()
     conn.commit()
     conn.close()
@@ -107,13 +130,15 @@ def create_chat(uid, content):
     # ...
     stmt = 'INSERT INTO `chats` VALUES (NULL,' + str(uid) + ",\'" + content + '\')'
     print(stmt)
-    cur.executescript(stmt)
+    try:
+        cur.executescript(stmt)
+    except Exception as e:
+        return None
     row = cur.fetchone()
     conn.commit()
     conn.close()
     return row
 
-# update the chats
 def get_chats(n):
     conn = connect_db()
     cur = conn.cursor()
@@ -123,7 +148,7 @@ def get_chats(n):
     conn.close()
     return list(map((lambda row: {'id': row[0],
                        'user_id': row[1],
-                       'content': row[2],
+                       'content': utils.escape(row[2]),
                        'username': get_user_from_id(row[1])['username']}),
                     rows))
 
@@ -164,7 +189,8 @@ def render_create_account():
 def changepassword(newpassword):
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('UPDATE `user` SET password=\'%s\' WHERE id=\'%d\'' % (newpassword, session['uid']))
+    new_encrypted = bcrypt.hashpw(newpassword.encode(), bcrypt.gensalt())
+    cur.execute('UPDATE `user` SET password=\'%s\' WHERE id=\'%d\'' % (new_encrypted, session['uid']))
     conn.commit()
     conn.close()
     return "success", 200
@@ -214,6 +240,7 @@ def do_login(user):
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
     if request.method == 'GET':
+        print("create account render")
         return render_create_account()
     elif request.method == 'POST':
         username = request.form['username']
@@ -244,8 +271,11 @@ def chat():
         uid = session['uid']
         json = request.get_json()
         print(json)
-        create_chat(json['uid'], json['content'])
-        return "success", 200
+        result = create_chat(json['uid'], json['content'])
+        if result is None:
+            return "forbidden", 403
+        else:
+            return "success", 200
     return redirect('/')
 
 @app.route('/chat/<cid>/delete')
@@ -274,4 +304,4 @@ if len(sys.argv) > 1 and sys.argv[1] == "init":
 
 if __name__ == '__main__':
     app.run(debug=True)
-
+    #app.run(debug=True, ssl_context=('cert.pem', 'key.pem'))
