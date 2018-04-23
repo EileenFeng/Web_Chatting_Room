@@ -184,6 +184,19 @@ def get_chats(n):
                        'username': get_user_from_id(row[1])['username']}),
                     rows))
 
+def get_channels(uid):
+    #TO-DO: get channel list from sql similarly to get_chats
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute('SELECT id, user_id, content FROM `chats` WHERE id>=%d ORDER BY id ASC' % n)
+    rows = cur.fetchall()
+    conn.commit()
+    conn.close()
+    return list(map((lambda row: {'id': row[0],
+                       'user_id': row[1],
+                       'content': utils.escape(row[2]),
+                       'username': get_user_from_id(row[1])['username']}),
+                    rows))
 
 
 def user_delete_chat_of_id(uid, tid):
@@ -291,6 +304,7 @@ def do_login(user):
         print("User is none")
         if 'uid' in session:
             session.pop('uid')
+        #TO-DO: wrong pwd alert & redirect back to login
         return redirect('/create_account')
 
 @app.route('/download_file/<channelname>/<filename>')
@@ -384,9 +398,11 @@ def create_account():
         return do_login(user)
 
 
-@app.route('/create_channel/<channame>/<topic>')
-def create_channel(channame, topic):
+@app.route('/create_channel', methods=['POST'])
+def create_channel():
     print('in create channel')
+    channame = request.form['channel_name']
+    topic = request.form['channel_topic']
     print(channame)
     print(topic)
     channame = utils.escape(channame)
@@ -426,15 +442,17 @@ def create_channel(channame, topic):
             if row[0] is not None:
                 conn.commit()
                 conn.close()
-                return "success", 200
+                #return "success", 200
+                return render_channel_table(uid)
         else:
             conn.commit()
             conn.close()
-            return "forbidden", 403
+            return "forbidden1", 403
     except sqlite3.IntegrityError:
+        #TO-DO: case when the channel is already in db. SHouldn't throw an exception.
         conn.commit()
         conn.close()
-        return "forbidden", 403
+        return "forbidden2", 403
 
 @app.route('/change_topic/<channel_name>/<new_topic>')
 def change_topics(channel_name, new_topic):
@@ -467,7 +485,7 @@ def index():
     if 'uid' in session:
         #return render_home_page(session['uid'])
         print("in uid in session index")
-        return render_channel_table(session['uid'])
+        return render_channel_table(session['uid'], channel_data=jsonify(get_channels(session['uid'])))
     return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -569,9 +587,6 @@ def decrypt_file(key, username, in_filename, chunksize=BUFFER_SIZE):
 
             outfile.truncate(origsize)
         return out_filename
-            
-
-
 
 if len(sys.argv) > 1 and sys.argv[1] == "init":
     init()
