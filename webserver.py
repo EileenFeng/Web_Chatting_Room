@@ -310,6 +310,8 @@ def create_channel(channame, topic):
     print('in create channel')
     print(channame)
     print(topic)
+    channame = utils.escape(channame)
+    topic = utils.escape(topic)
     conn = connect_db()
     cur = conn.cursor()
     try:
@@ -357,6 +359,7 @@ def create_channel(channame, topic):
 def change_topics(channel_name, new_topic):
     print("in change tocpics")
     print(channel_name)
+    new_topic = utils.escape(new_topic)
     print(new_topic)
     conn = connect_db()
     cur = conn.cursor()
