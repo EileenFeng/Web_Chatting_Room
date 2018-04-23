@@ -15,6 +15,7 @@ import sys
 import time
 import bcrypt
 import ssl
+import requests
 
 from bcrypt import hashpw, gensalt 
 
@@ -30,9 +31,10 @@ from jinja2 import utils
 
 app = Flask(__name__)
 
+BUFFER_SIZE = 1024
 app.secret_key = 'schrodinger cat'
-
 default_channel_topic = "default topic"
+file_key = b'&%#$_9Gjns{]H6s_'
 
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
@@ -291,6 +293,81 @@ def do_login(user):
             session.pop('uid')
         return redirect('/create_account')
 
+@app.route('/download_file/<channelname>/<filepath>')
+def download_file(channelname, filepath):
+    if 'uid' not in session:
+        return "Not Found", 404
+    usr = session['uid']
+    conn = connect_db()
+    cur = conn.cursor()
+    channelname = '#'+channelname
+    try:
+        cur.execute('SELECT channelname, filenames FROM `channels` WHERE channelname=?', (channelname,))
+        row = cur.fetchone()
+        print(row[0])
+        if row[0] is not None:
+            print(row[1])
+            if row[1] is not None:
+                if filepath in row[1]:
+                    try:
+                        #GET to Tiny Web Server
+                        outputfile = filepath
+                        filepath += ".crypt"
+                        dirs = outputfile.split("/")
+                        dir_num = 0
+                        if outputfile.endswith("/"):
+                            dir_num = len(dirs)
+                        else:
+                            dir_num = len(dirs) - 1
+                        cwd = os.getcwd()
+                        count = 0
+                        while (count < dir_num):
+                            if not os.path.exists(dirs[count]):
+                                os.makedirs(dirs[count])
+                            os.chdir(dirs[count])
+                            count += 1
+                        os.chdir(cwd)
+                        get_req = requests.get("http://localhost:8080/" + filepath)
+                        if (get_req.ok):
+                            try:
+                                print("Got file from Tiny Web Server!")
+                                with open(filepath, 'wb') as in_file:
+                                    for chunk in get_req.iter_content(chunk_size=BUFFER_SIZE):
+                                        in_file.write(chunk)
+                                try:
+                                    decrypt_file(file_key, usr, filepath)
+                                    return "Success", 200
+                                except IOError as e:
+                                    print ("Error: sending decrypted file in download failed")
+                                    conn.commit()
+                                    conn.close()
+                                    return "Not Found", 404             
+                            except IOError as e:
+                                print("Error: read in file from stream in download failed")
+                                print(e)
+                                conn.commit()
+                                conn.close()
+                                return "Not Found", 404
+                        else:
+                            print("Error: Failed to get file from Tiny Web Server!")
+                            conn.commit()
+                            conn.close()
+                            return "Not Found", 404
+                    except IOError:
+                        print("Error: Open file %s failed." % filepath)
+                        conn.commit()
+                        conn.close()
+                        return "Not Found", 404
+        conn.commit()
+        conn.close()
+        return "Not Found", 404
+    except sqlite3.IntegrityError:
+        conn.commit()
+        conn.close()
+        return "Not Found", 404
+
+
+
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
     if request.method == 'GET':
@@ -353,6 +430,8 @@ def create_channel(channame, topic):
             conn.close()
             return "forbidden", 403
     except sqlite3.IntegrityError:
+        conn.commit()
+        conn.close()
         return "forbidden", 403
 
 @app.route('/change_topic/<channel_name>/<new_topic>')
@@ -377,6 +456,8 @@ def change_topics(channel_name, new_topic):
             conn.close() 
             return "forbidden", 403     
     except sqlite3.IntegrityError:
+        conn.commit()
+        conn.close()
         return "forbidden", 403
 
 @app.route('/')
@@ -430,6 +511,65 @@ def serve_js(path):
 @app.route('/css/<path:path>')
 def serve_css(path):
     return send_from_directory('css', path)
+
+
+# 'encrypt_file' and 'decrypt_file' function referrence: 
+# https://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto
+def encrypt_file(key, in_filename, chunksize = BUFFER_SIZE):
+    out_filename = in_filename + '.crypt'
+    iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
+    encryptor = AES.new(key, AES.MODE_CBC, iv)
+    filesize = os.path.getsize(in_filename)
+    with open(in_filename, 'rb') as infile:
+        with open(out_filename, 'wb') as outfile:
+            outfile.write(struct.pack('<Q', filesize))
+            outfile.write(iv)
+            
+            while True:
+                chunk = infile.read(chunksize)
+                if len(chunk) == 0:
+                    break
+                elif len(chunk) % 16 != 0:
+                    chunk += ' ' * (16 - len(chunk) % 16)
+                outfile.write(encryptor.encrypt(chunk))
+                    
+    return out_filename
+                
+def decrypt_file(key, username, in_filename, chunksize=BUFFER_SIZE):
+    files = in_filename[:len(in_filename) - len(".crypt")].split("/")
+    single_filename = files[len(files)-1]
+    out_filename = username + "/" + single_filename
+    dirs = out_filename.split("/")
+    dir_num = 0
+    if out_filename.endswith("/"):
+        dir_num = len(dirs)
+    else:
+        dir_num = len(dirs) - 1
+    cwd = os.getcwd()
+    count = 0
+    while (count < dir_num):
+        if not os.path.exists(dirs[count]):
+            os.makedirs(dirs[count])
+        os.chdir(dirs[count])
+        count += 1
+    os.chdir(cwd)
+    
+    with open(in_filename, 'rb') as infile:
+        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+        iv = infile.read(16)
+        decryptor = AES.new(key, AES.MODE_CBC, iv)
+        with open(out_filename, 'wb') as outfile:
+            while True:
+                chunk = infile.read(chunksize)
+                if len(chunk) == 0:
+                    break
+                outfile.write(decryptor.decrypt(chunk))
+
+            outfile.truncate(origsize)
+        return out_filename
+            
+
+
 
 if len(sys.argv) > 1 and sys.argv[1] == "init":
     init()
