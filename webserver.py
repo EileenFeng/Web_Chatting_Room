@@ -12,7 +12,11 @@
 import os
 import sqlite3
 import sys
+import time
 import bcrypt
+import ssl
+
+from bcrypt import hashpw, gensalt 
 
 from flask import Flask
 from flask import redirect
@@ -22,11 +26,13 @@ from flask import session
 from flask import render_template
 from flask import send_from_directory
 from jinja2 import Template
-from bcrypt import hashpw, gensalt
+from jinja2 import utils
 
 app = Flask(__name__)
 
 app.secret_key = 'schrodinger cat'
+
+default_channel_topic = "default topic"
 
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
@@ -40,19 +46,38 @@ def create_tables():
             CREATE TABLE IF NOT EXISTS user(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username VARCHAR(32),
-            password VARCHAR(32)
+            password VARCHAR(32),
+            channels TEXT,
+            blocked TEXT,
+            banned TEXT,
+            uploadedfiles TEXT,
+            channeladmin TEXT, 
+            unique(username)
             )''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS channels(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        channelname VARCHAR(32),
+        members VARCHAR(32),
+        admin VARCHAR(32),
+        topics TEXT,
+        banned TEXT, 
+        filenames TEXT,
+        unique(channelname)
+        )''')
     cur.execute('''
         CREATE TABLE IF NOT EXISTS chats(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        channelname VARCHAR(32),
         user_id INTEGER,
-        content TEXT,
+        context TEXT,
         FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
         )''')
     conn.commit()
     conn.close()
 
 def init_data():
+    '''
     users = [
         ('user1', '123456'),
         ('user2', '123456')
@@ -63,10 +88,11 @@ def init_data():
         (2, 'Here\'s my third post'),
         (2, 'Last post here.')
     ]
+    '''
     conn = connect_db()
     cur = conn.cursor()
-    cur.executemany('INSERT INTO `user` VALUES(NULL,?,?)', users)
-    cur.executemany('INSERT INTO `chats` VALUES(NULL,?,?)', lines)
+    #cur.executemany('INSERT INTO `user` VALUES(NULL,?,?)', users)
+    #cur.executemany('INSERT INTO `chats` VALUES(NULL,?,?)', lines)
     conn.commit()
     conn.close()
 
@@ -105,7 +131,10 @@ def create_user(username, password):
     encrypted_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     print("encrypted")
     print(encrypted_pw)
-    cur.execute('INSERT INTO `user` VALUES(NULL,?,?);', (username, encrypted_pw))
+    try: 
+        cur.execute('INSERT INTO `user` VALUES(NULL,?,?, NULL, NULL, NULL, NULL, NULL)', (username, encrypted_pw))
+    except sqlite3.IntegrityError:
+        return None
     row = cur.fetchone()
     conn.commit()
     conn.close()
@@ -126,13 +155,15 @@ def create_chat(uid, content):
     # ...
     stmt = 'INSERT INTO `chats` VALUES (NULL,' + str(uid) + ",\'" + content + '\')'
     print(stmt)
-    cur.executescript(stmt)
+    try:
+        cur.executescript(stmt)
+    except Exception as e:
+        return None
     row = cur.fetchone()
     conn.commit()
     conn.close()
     return row
 
-# update the chats
 def get_chats(n):
     conn = connect_db()
     cur = conn.cursor()
@@ -142,7 +173,7 @@ def get_chats(n):
     conn.close()
     return list(map((lambda row: {'id': row[0],
                        'user_id': row[1],
-                       'content': row[2],
+                       'content': utils.escape(row[2]),
                        'username': get_user_from_id(row[1])['username']}),
                     rows))
 
@@ -247,11 +278,12 @@ def do_login(user):
         session['uid'] = user['id']
         return redirect('/')
     else:
-        return redirect('/login')
+        return redirect('/create_account')
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
     if request.method == 'GET':
+        print("create account render")
         return render_create_account()
     elif request.method == 'POST':
         username = request.form['username']
@@ -260,10 +292,43 @@ def create_account():
         user = create_user(username, password)
         return do_login(user)
 
+
+@app.route('/create_channel/<channame>/<topic>', methods=['GET'])
+def create_channel(channame, topic):
+    print('herepathpath')
+    print(channame)
+    print(topic)
+    conn = connect_db()
+    cur = conn.cursor()
+    uid = session['uid']
+    cur.execute('SELECT username FROM `user` WHERE id=\'%s\'' % uid)
+    row = cur.fetchone()
+    print(len(row))
+    admin_name = row[0]
+    print(admin_name)
+    try:
+        cur.execute('INSERT INTO `channels` VALUES(NULL,?, NULL, ?, ?, NULL, NULL);', (channame, admin_name, topic))
+    except sqlite3.IntegrityError:
+        return "forbidden", 403
+    print("done")
+    cur.execute('SELECT channelname, topics FROM `channels` WHERE admin=?', (admin_name,))
+    row = cur.fetchone()
+    print(row[0])
+    print(row[1])
+    conn.commit()
+    conn.close()
+    return "success", 200
+    #json_data = request.get_json()
+    #pwd = json_data['password']
+    #print(pwd)
+
+
+
 @app.route('/')
 def index():
     if 'uid' in session:
         #return render_home_page(session['uid'])
+        print("hehe")
         return render_channel_table(session['uid'])
     return redirect('/login')
 
@@ -284,8 +349,11 @@ def chat():
         uid = session['uid']
         json = request.get_json()
         print(json)
-        create_chat(json['uid'], json['content'])
-        return "success", 200
+        result = create_chat(json['uid'], json['content'])
+        if result is None:
+            return "forbidden", 403
+        else:
+            return "success", 200
     return redirect('/')
 
 @app.route('/chat/<cid>/delete')
@@ -314,4 +382,4 @@ if len(sys.argv) > 1 and sys.argv[1] == "init":
 
 if __name__ == '__main__':
     app.run(debug=True)
-
+    #app.run(debug=True, ssl_context=('cert.pem', 'key.pem'))
