@@ -69,6 +69,7 @@ button {
 	outline: none !important;
 	border: none;
 	background: transparent;
+  border-radius: 12px;
 }
 
 button:hover {
