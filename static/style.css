@@ -7,6 +7,13 @@ body {
   font-family: "Calibri", "Roboto", sans-serif;
 }
 
+.file_window{
+    position: absolute;
+    width: calc(100% - 80px);
+    height: 500px;
+    background-color: #fff;
+}
+
 .chat_window {
   position: absolute;
   width: calc(100% - 20px);
