@@ -133,12 +133,21 @@ def create_user(username, password):
     print(encrypted_pw)
     try: 
         cur.execute('INSERT INTO `user` VALUES(NULL,?,?, NULL, NULL, NULL, NULL, NULL)', (username, encrypted_pw))
+        cur.execute('SELECT id FROM `user` WHERE username= ?', (username,))
+        row = cur.fetchone()
+        conn.commit()
+        conn.close()
+        if row is not None:
+            print("here")
+            return {'id': row[0], 'username': username} 
+        else:
+            return None
     except sqlite3.IntegrityError:
+        conn.commit()
+        conn.close()
+        print("failed")
         return None
-    row = cur.fetchone()
-    conn.commit()
-    conn.close()
-    return {'id': row[0], 'username': row[1]} if row is not None else None
+
 
 def get_user_from_id(uid):
     conn = connect_db()
@@ -223,7 +232,7 @@ def change_pwd():
             return render_change_pwd()
         conn.commit()
         conn.close()
-        return redirect('/')
+        return redirect('/login')
 
 # @app.route('/changepassword/<newpassword>')
 # def changepassword(newpassword):
@@ -275,9 +284,13 @@ def render_channel_table(uid):
 
 def do_login(user):
     if user is not None:
+        print("not null")
         session['uid'] = user['id']
         return redirect('/')
     else:
+        print("User is none")
+        if 'uid' in session:
+            session.pop('uid')
         return redirect('/create_account')
 
 @app.route('/create_account', methods=['GET', 'POST'])
@@ -290,6 +303,7 @@ def create_account():
         password = request.form['password']
         print(username,password)
         user = create_user(username, password)
+        print(user)
         return do_login(user)
 
 
@@ -328,7 +342,7 @@ def create_channel(channame, topic):
 def index():
     if 'uid' in session:
         #return render_home_page(session['uid'])
-        print("hehe")
+        print("in uid in session index")
         return render_channel_table(session['uid'])
     return redirect('/login')
 
