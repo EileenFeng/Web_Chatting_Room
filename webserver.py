@@ -188,15 +188,16 @@ def get_channels(uid):
     #TO-DO: get channel list from sql similarly to get_chats
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('SELECT id, user_id, content FROM `chats` WHERE id>=%d ORDER BY id ASC' % n)
-    rows = cur.fetchall()
+    cur.execute('SELECT channels FROM `user` WHERE id = ?', (uid,))
+    row = cur.fetchone()
     conn.commit()
     conn.close()
-    return list(map((lambda row: {'id': row[0],
-                       'user_id': row[1],
-                       'content': utils.escape(row[2]),
-                       'username': get_user_from_id(row[1])['username']}),
-                    rows))
+    if row[0] is None:
+        return list()
+    else:
+        res = row[0].split('#')
+        print(isinstance(res, list))
+        return res
 
 
 def user_delete_chat_of_id(uid, tid):
@@ -291,7 +292,7 @@ def render_home_page(uid):
     user = get_user_from_id(uid)
     return render_template('chats.html', uid=uid, user=user['username'])
 
-def render_channel_table(uid):
+def render_channel_table(uid, channel_data):
     user = get_user_from_id(uid)
     return render_template('table.html', uid=uid, user=user['username'])
 
@@ -420,6 +421,7 @@ def create_channel():
         cur.execute('INSERT INTO `channels` VALUES(NULL,?, ?, ?, ?, NULL, NULL);', (channame, admin_name, admin_name, topic))
         cur.execute('SELECT channels FROM `user` where username= ?', (admin_name,))
         row =cur.fetchone()
+        print("4")
         new_channels = ""
         print(row)
         if row[0] is None:
@@ -443,7 +445,7 @@ def create_channel():
                 conn.commit()
                 conn.close()
                 #return "success", 200
-                return render_channel_table(uid)
+                return render_channel_table(uid, jsonify(get_channels(session['uid'])))
         else:
             conn.commit()
             conn.close()
@@ -485,7 +487,8 @@ def index():
     if 'uid' in session:
         #return render_home_page(session['uid'])
         print("in uid in session index")
-        return render_channel_table(session['uid'], channel_data=jsonify(get_channels(session['uid'])))
+        print(session['uid'])
+        return render_channel_table(session['uid'], jsonify(get_channels(session['uid'])))
     return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
