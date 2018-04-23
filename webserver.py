@@ -198,9 +198,17 @@ def get_channels(uid):
     if row[0] is None:
         return list()
     else:
+        print(row[0])
         res = row[0].split('#')
-        print(isinstance(res, list))
-        return res
+        chanlist = list()
+        for chan in res:
+            print(chan)
+            if chan != '':
+                print("appending")
+                chanlist.append(chan)
+        print(isinstance(chan, list))
+        print(chanlist)
+        return chanlist
 
 
 def user_delete_chat_of_id(uid, tid):
@@ -227,7 +235,6 @@ def change_pwd():
         username = request.form['username']
         old_pwd = request.form['old_password']
         new_pwd = request.form['new_password']
-    
         conn = connect_db()
         cur = conn.cursor()
         cur.execute('SELECT password FROM `user` WHERE username= ?', (username,))
