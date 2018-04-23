@@ -32,6 +32,8 @@ app = Flask(__name__)
 
 app.secret_key = 'schrodinger cat'
 
+default_channel_topic = "default topic"
+
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
 def connect_db():
@@ -49,17 +51,19 @@ def create_tables():
             blocked TEXT,
             banned TEXT,
             uploadedfiles TEXT,
-            channeladmin TEXT
+            channeladmin TEXT, 
+            unique(username)
             )''')
     cur.execute('''
         CREATE TABLE IF NOT EXISTS channels(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channelname VARCHAR(32),
-        username VARCHAR(32),
+        members VARCHAR(32),
         admin VARCHAR(32),
         topics TEXT,
         banned TEXT, 
-        filenames TEXT
+        filenames TEXT,
+        unique(channelname)
         )''')
     cur.execute('''
         CREATE TABLE IF NOT EXISTS chats(
@@ -127,7 +131,10 @@ def create_user(username, password):
     encrypted_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     print("encrypted")
     print(encrypted_pw)
-    cur.execute('INSERT INTO `user` VALUES(NULL,?,?, NULL, NULL, NULL, NULL, NULL);', (username, encrypted_pw))
+    try: 
+        cur.execute('INSERT INTO `user` VALUES(NULL,?,?, NULL, NULL, NULL, NULL, NULL)', (username, encrypted_pw))
+    except sqlite3.IntegrityError:
+        return None
     row = cur.fetchone()
     conn.commit()
     conn.close()
@@ -271,7 +278,7 @@ def do_login(user):
         session['uid'] = user['id']
         return redirect('/')
     else:
-        return redirect('/login')
+        return redirect('/create_account')
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():
@@ -285,10 +292,43 @@ def create_account():
         user = create_user(username, password)
         return do_login(user)
 
+
+@app.route('/create_channel/<channame>/<topic>', methods=['GET'])
+def create_channel(channame, topic):
+    print('herepathpath')
+    print(channame)
+    print(topic)
+    conn = connect_db()
+    cur = conn.cursor()
+    uid = session['uid']
+    cur.execute('SELECT username FROM `user` WHERE id=\'%s\'' % uid)
+    row = cur.fetchone()
+    print(len(row))
+    admin_name = row[0]
+    print(admin_name)
+    try:
+        cur.execute('INSERT INTO `channels` VALUES(NULL,?, NULL, ?, ?, NULL, NULL);', (channame, admin_name, topic))
+    except sqlite3.IntegrityError:
+        return "forbidden", 403
+    print("done")
+    cur.execute('SELECT channelname, topics FROM `channels` WHERE admin=?', (admin_name,))
+    row = cur.fetchone()
+    print(row[0])
+    print(row[1])
+    conn.commit()
+    conn.close()
+    return "success", 200
+    #json_data = request.get_json()
+    #pwd = json_data['password']
+    #print(pwd)
+
+
+
 @app.route('/')
 def index():
     if 'uid' in session:
         #return render_home_page(session['uid'])
+        print("hehe")
         return render_channel_table(session['uid'])
     return redirect('/login')
 
