@@ -42,6 +42,7 @@ def connect_db():
 def create_tables():
     conn = connect_db()
     cur = conn.cursor()
+    #banned: channels
     cur.execute('''
             CREATE TABLE IF NOT EXISTS user(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +59,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS channels(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channelname VARCHAR(32),
-        members VARCHAR(32),
+        members TEXT,
         admin VARCHAR(32),
         topics TEXT,
         banned TEXT, 
@@ -181,6 +182,8 @@ def get_chats(n):
                        'username': get_user_from_id(row[1])['username']}),
                     rows))
 
+
+
 def user_delete_chat_of_id(uid, tid):
     conn = connect_db()
     cur = conn.cursor()
@@ -208,7 +211,7 @@ def change_pwd():
     
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute('SELECT password FROM `user` WHERE username=\'%s\'' % username)
+        cur.execute('SELECT password FROM `user` WHERE username= ?', (username,))
         db_pwd = cur.fetchone()[0].encode()
         #TO-DO: add encryption here
         #encrypted_oldpwd = bcrypt.hashpw(old_pwd.encode(), bcrypt.gensalt())
@@ -216,7 +219,7 @@ def change_pwd():
 
         try:
             if bcrypt.checkpw(old_pwd.encode(), db_pwd):
-                cur.execute('UPDATE `user` SET password=\'%s\' WHERE username=\'%s\'' % (encrypted_newpwd, username))            
+                cur.execute('UPDATE `user` SET password=? WHERE username=?', (encrypted_newpwd, username))            
             else:
                 conn.commit()
                 conn.close()
@@ -309,32 +312,46 @@ def create_channel(channame, topic):
     print(topic)
     conn = connect_db()
     cur = conn.cursor()
-    uid = session['uid']
-    cur.execute('SELECT username FROM `user` WHERE id=\'%s\'' % uid)
-    row = cur.fetchone()
-    print(len(row))
-    admin_name = row[0]
-    print(admin_name)
     try:
-        cur.execute('INSERT INTO `channels` VALUES(NULL,?, NULL, ?, ?, NULL, NULL);', (channame, admin_name, topic))
+        uid = session['uid']
+        cur.execute('SELECT username FROM `user` WHERE id=\'%s\'' % uid)
+        row = cur.fetchone()
+        print(len(row))
+        admin_name = row[0]
+        print(admin_name)
+        channame = '#' + channame
+        cur.execute('INSERT INTO `channels` VALUES(NULL,?, ?, ?, ?, NULL, NULL);', (channame, admin_name, admin_name, topic))
+        cur.execute('SELECT channels FROM `user` where username= ?', (admin_name,))
+        row =cur.fetchone()
+        new_channels = ""
+        print(row)
+        if row[0] is None:
+            new_channels = channame
+        else:
+            new_channels = row[0] + channame
+        print("new channel is")
+        print(new_channels)
+        cur.execute('UPDATE `user` SET channels=? WHERE username=?',(new_channels, admin_name))
+        cur.execute('UPDATE `user` SET channeladmin=? WHERE username=?',(new_channels, admin_name))
+        print("done")
+        cur.execute('SELECT * FROM `user` WHERE channels=? AND username=?', (new_channels,admin_name))
+        row = cur.fetchall()
+        print(row)
+        if row[0] is not None:
+            cur.execute('SELECT * FROM `channels` WHERE channelname= ?', (channame,))
+            row = cur.fetchall()
+            print("channels")
+            print(row)
+            if row[0] is not None:
+                conn.commit()
+                conn.close()
+                return "success", 200
+        else:
+            conn.commit()
+            conn.close()
+            return "forbidden", 403
     except sqlite3.IntegrityError:
         return "forbidden", 403
-    print("done")
-    cur.execute('SELECT channels FROM `user` WHERE username=?' , (admin_name,))
-    row = cur.fetchone()
-    if row is None:
-        return "forbidden", 403
-    else:
-        cur.execute('SELECT channelname, topics FROM `channels` WHERE admin=?', (admin_name,))
-        row = cur.fetchone()
-        print(row[0])
-        print(row[1])
-        conn.commit()
-        conn.close()
-        return "success", 200
-        #json_data = request.get_json()
-        #pwd = json_data['password']
-        #print(pwd)
 
 @app.route('/change_topic/<channel_name>/<new_topic>')
 def change_topics(channel_name, new_topic):
@@ -343,19 +360,21 @@ def change_topics(channel_name, new_topic):
     print(new_topic)
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('UPDATE `channels` SET topics=? WHERE channelname=?',(new_topic, channel_name))
-    cur.execute('SELECT topics FROM `channels` WHERE channelname=?', (channel_name,))
-    row = cur.fetchone()
-    print("after update topic")
-    if row[0] == new_topic:
-        conn.commit()
-        conn.close() 
-        return "success", 200      
-    else:
-        conn.commit()
-        conn.close() 
-        return "forbidden", 403     
-
+    try:
+        cur.execute('UPDATE `channels` SET topics=? WHERE channelname=?',(new_topic, channel_name))
+        cur.execute('SELECT topics FROM `channels` WHERE channelname=?', (channel_name,))
+        row = cur.fetchone()
+        print("after update topic")
+        if row[0] == new_topic:
+            conn.commit()
+            conn.close() 
+            return "success", 200      
+        else:
+            conn.commit()
+            conn.close() 
+            return "forbidden", 403     
+    except sqlite3.IntegrityError:
+        return "forbidden", 403
 
 @app.route('/')
 def index():
