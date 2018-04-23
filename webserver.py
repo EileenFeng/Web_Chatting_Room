@@ -105,24 +105,19 @@ def get_user_from_username_and_password(username, password):
     cur = conn.cursor()
     print(username,password)
     #cur.execute('SELECT id, username FROM `user` WHERE username=\'%s\' AND password=\'%s\'' % (username, password))
-    '''
-    cur.execute('SELECT id, username FROM `user` WHERE username= ? AND password= ? ', (username, password))
-    row = cur.fetchone()
-    conn.commit()
-    conn.close()
-    print(row)
-    return {'id': row[0], 'username': row[1]} if row is not None else None
-    '''
     cur.execute('SELECT id, password FROM `user` WHERE username= ?', (username,))
     row = cur.fetchone()
     print (row)
-    verify_pw = row[1].encode()
-    try:
-        if bcrypt.checkpw(password.encode(), verify_pw):
-            return {'id': row[0], 'username': username}
-        else:
+    if row is not None:
+        verify_pw = row[1].encode()
+        try:
+            if bcrypt.checkpw(password.encode(), verify_pw):
+                return {'id': row[0], 'username': username}
+            else:
+                return None
+        except Exception, e:
             return None
-    except Exception, e:
+    else:
         return None
 
 def create_user(username, password):
@@ -307,9 +302,9 @@ def create_account():
         return do_login(user)
 
 
-@app.route('/create_channel/<channame>/<topic>', methods=['GET'])
+@app.route('/create_channel/<channame>/<topic>')
 def create_channel(channame, topic):
-    print('herepathpath')
+    print('in create channel')
     print(channame)
     print(topic)
     conn = connect_db()
@@ -325,17 +320,41 @@ def create_channel(channame, topic):
     except sqlite3.IntegrityError:
         return "forbidden", 403
     print("done")
-    cur.execute('SELECT channelname, topics FROM `channels` WHERE admin=?', (admin_name,))
+    cur.execute('SELECT channels FROM `user` WHERE username=?' , (admin_name,))
     row = cur.fetchone()
-    print(row[0])
-    print(row[1])
-    conn.commit()
-    conn.close()
-    return "success", 200
-    #json_data = request.get_json()
-    #pwd = json_data['password']
-    #print(pwd)
+    if row is None:
+        return "forbidden", 403
+    else:
+        cur.execute('SELECT channelname, topics FROM `channels` WHERE admin=?', (admin_name,))
+        row = cur.fetchone()
+        print(row[0])
+        print(row[1])
+        conn.commit()
+        conn.close()
+        return "success", 200
+        #json_data = request.get_json()
+        #pwd = json_data['password']
+        #print(pwd)
 
+@app.route('/change_topic/<channel_name>/<new_topic>')
+def change_topics(channel_name, new_topic):
+    print("in change tocpics")
+    print(channel_name)
+    print(new_topic)
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute('UPDATE `channels` SET topics=? WHERE channelname=?',(new_topic, channel_name))
+    cur.execute('SELECT topics FROM `channels` WHERE channelname=?', (channel_name,))
+    row = cur.fetchone()
+    print("after update topic")
+    if row[0] == new_topic:
+        conn.commit()
+        conn.close() 
+        return "success", 200      
+    else:
+        conn.commit()
+        conn.close() 
+        return "forbidden", 403     
 
 
 @app.route('/')
