@@ -293,13 +293,14 @@ def do_login(user):
             session.pop('uid')
         return redirect('/create_account')
 
-@app.route('/download_file/<channelname>/<filepath>')
-def download_file(channelname, filepath):
+@app.route('/download_file/<channelname>/<filename>')
+def download_file(channelname, filename):
     if 'uid' not in session:
         return "Not Found", 404
     usr = session['uid']
     conn = connect_db()
     cur = conn.cursor()
+    print(filename)
     channelname = '#'+channelname
     try:
         cur.execute('SELECT channelname, filenames FROM `channels` WHERE channelname=?', (channelname,))
@@ -308,6 +309,7 @@ def download_file(channelname, filepath):
         if row[0] is not None:
             print(row[1])
             if row[1] is not None:
+                filepath = channelname + '/'+filename
                 if filepath in row[1]:
                     try:
                         #GET to Tiny Web Server
