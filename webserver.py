@@ -44,12 +44,14 @@ def connect_db():
 def create_tables():
     conn = connect_db()
     cur = conn.cursor()
-    #banned: channels
+    #banned: channels that banned this user
+    # status 0 stands for not logged in, 1 stands for logged in
     cur.execute('''
             CREATE TABLE IF NOT EXISTS user(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username VARCHAR(32),
             password VARCHAR(32),
+            status INTEGER,
             channels TEXT,
             blocked TEXT,
             banned TEXT,
@@ -115,6 +117,7 @@ def get_user_from_username_and_password(username, password):
         verify_pw = row[1].encode()
         try:
             if bcrypt.checkpw(password.encode(), verify_pw):
+                cur.execute('UPDATE `user` SET status=? WHERE username=?', (1, username)) 
                 return {'id': row[0], 'username': username}
             else:
                 return None
@@ -130,7 +133,7 @@ def create_user(username, password):
     print("encrypted")
     print(encrypted_pw)
     try: 
-        cur.execute('INSERT INTO `user` VALUES(NULL,?,?, NULL, NULL, NULL, NULL, NULL)', (username, encrypted_pw))
+        cur.execute('INSERT INTO `user` VALUES(NULL,?,?, 1, NULL, NULL, NULL, NULL, NULL)', (username, encrypted_pw))
         cur.execute('SELECT id FROM `user` WHERE username= ?', (username,))
         row = cur.fetchone()
         conn.commit()
@@ -523,6 +526,12 @@ def delete_chat(cid):
 @app.route('/logout')
 def logout():
     if 'uid' in session:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute('UPDATE `user` SET status=? WHERE id=?', (0, session['uid'])) 
+        cur.execute('SELECT username, status FROM `user` WHERE id = ?', (session['uid'],))
+        row = cur.fetchone()
+        print(row)
         session.pop('uid')
     return redirect('/login')
 
