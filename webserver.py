@@ -197,6 +197,7 @@ def create_chat(uid, content):
 
 def get_chats(channel_name, n):
     conn = connect_db()
+    conn.text_factory = str
     cur = conn.cursor()
     print("1getcha")
     print(channel_name)
@@ -209,12 +210,12 @@ def get_chats(channel_name, n):
     print(rows)
     #did not write salt!!!
     if len(rows) != 0:
-        print(rows[0])
-        splits = rows[0].split('\n', 2)
+        print(rows[0][0])
+        splits = rows[0][0].split('\n', 2)
         print(splits)
         salt = str.strip(splits[0])
         msg_encrypted = splits[1]
-        signature = splits[2].finalize()
+        signature = splits[2]
         print(msg_encrypted)
         print("3")
         msg_decrypted = ''
@@ -385,6 +386,7 @@ def do_login(user):
     if user is not None:
         print("not null")
         session['uid'] = user['id']
+        get_chats('#chan1', 0)
         return redirect('/')
     else:
         print("User is none")
@@ -529,7 +531,6 @@ def create_channel():
             if row[0] is not None:
                 conn.commit()
                 conn.close()
-                get_chats('#chan1', 0)
                 #return "success", 200
                 return render_channel_table(uid, get_channels(session['uid']))
         else:

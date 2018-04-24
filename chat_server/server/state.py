@@ -186,6 +186,8 @@ class State:
                 print(row[0])
                 if row[0] is not None:
                     print(row[0])
+                    if username not in self.users:
+                        self.users[username] = User(username, row[0], list())
                     #u = self.users[username]
                     if bcrypt.checkpw(password, row[0].encode()):
                         # Log in the user
@@ -271,7 +273,6 @@ class State:
     def write_log(self, channel):
         timestamp = str(int(round(time.time() * 1000)))
         log_name = "logs/log-" + channel[1:] + "-" + timestamp + ".log"
-
         #Fernet
         salt = os.urandom(16)
         kdf = PBKDF2HMAC(
@@ -285,50 +286,83 @@ class State:
         fernet = Fernet(key)
         log_str = self.channels[channel].current_log
         encrypted_log = fernet.encrypt(log_str.encode())
-        conn = connect_db()
-        cur = conn.cursor()
-        cur.execute('INSERT INTO `chats` VALUES(NULL, ?, NULL, ?)', (channel, encrypted_log))
-        conn.commit()
-        conn.close()
+        encrypted_info = ""
         with open(log_name, 'wb') as logfile:
             h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
             h.update(log_str.encode())
             mac_str = bytes(h.finalize())
             logfile.write(salt + "\n" + encrypted_log + "\n" + mac_str)
+            encrypted_info = salt + "\n" + encrypted_log + "\n" + mac_str
+        conn = connect_db()
+        cur = conn.cursor()
+        conn.text_factory = str
+        cur.execute('INSERT INTO `chats` VALUES(NULL, ?, NULL, ?)', (channel, encrypted_info))
+        conn.commit()
+        conn.close()
         self.channels[channel].current_log = ""
         self.channels[channel].msg_count = 0
 
+    def add_channel(self, channel_name, topic, admin, memberlist, banlist):
+        members = memberlist.split(';')
+        print(members)
+        bans = None
+        if banlist is not None:
+            bans = banlist.split(';')
+        else:
+            bans = list()
+        print(bans)
+        new_chan = Channel(channel_name, topic, members, admin, bans)
+        self.channels[channel_name] = new_chan
+
     def join(self, user, channel_name):
-        conn = connect_db()
-        cur = conn.cursor()
         if channel_name.startswith("#"):
-            if channel_name in self.channels:
-                channel = self.channels[channel_name]
-                if user in channel.banlist:
-                    self.notify(user, "Error: User is banned from sending messages to channel!\n")
-                else:
-                    if user in channel.members:
-                        self.notify(user, "Error: User is already a member of channel.\n")
+            conn = connect_db()
+            cur = conn.cursor()
+            cur.execute('SELECT topics, admin, members, banned FROM `channels` WHERE channelname = ?', (channel_name,))
+            row = cur.fetchone()
+            print("in joining %s" % channel_name)
+            print(row)
+            if row is not None:
+                self.add_channel(channel_name, row[0], row[1], row[2], row[3])
+                if channel_name in self.channels:
+                    channel = self.channels[channel_name]
+                    if user in channel.banlist:
+                        self.notify(user, "Error: User is banned from sending messages to channel!\n")
                     else:
-                        channel.members.append(user)
-                        cur.execute('SELECT members FROM `channels` where channelname=?', (channel_name,))
-                        row = cur.fetchone()
-                        newmem = row[0]
-                        newmem += ';'
-                        newmem += user
-                        cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (newmem, channel_name))
-                        conn.commit()
-                        conn.close()
-                        self.notify(user, "Successfully joined channel!\n")
+                        if user in channel.members:
+                            self.notify(user, "Error: User is already a member of channel.\n")
+                        else:
+                            channel.members.append(user)
+                            cur.execute('SELECT members FROM `channels` where channelname=?', (channel_name,))
+                            row = cur.fetchone()
+                            newmem = row[0]
+                            newmem += ';'
+                            newmem += user
+                            cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (newmem, channel_name))
+                            conn.commit()
+                            conn.close()
+                            self.notify(user, "Successfully joined channel!\n")
             else:
+                print("here adding channels")
                 new_channel = Channel(channel_name, "Default topic", [user], user, [])
                 cur.execute('INSERT INTO `channels` VALUES(NULL, ?, ?, ?, ?, NULL, NULL)', (channel_name, user, user, "Default topic"))
+                cur.execute('SELECT channels FROM `user` WHERE username= ?', (user,))
+                row = cur.fetchone()
+                chanlist = ""
+                if row[0] is None:
+                    chanlist = channel_name
+                else:
+                    chanlist = row[0] + channel_name
+                print("chan list before insertion")
+                print(chanlist)
+                cur.execute('UPDATE `user` SET channels=? WHERE username= ?', (chanlist, user))
                 conn.commit()
                 conn.close()
                 self.channels[channel_name] = new_channel
                 self.notify(user, "Channel created!\n")
         else:
             self.notify(user, "Error: Channel name must start with #.\n")
+            
 
     def gettopic(self, user, channel_name):
         if channel_name in self.channels:
