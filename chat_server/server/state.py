@@ -157,7 +157,7 @@ class State:
                 conn = connect_db()
                 cur = conn.cursor()
                 try:
-                    cur.execute(cur.execute('INSERT INTO `user` VALUES(NULL,?,?, 0, NULL, NULL, NULL, NULL, NULL)', (username, encryptedpw)))
+                    cur.execute('INSERT INTO `user` VALUES(NULL,?,?, 0, NULL, NULL, NULL, NULL, NULL)', (username, encryptedpw))
                     conn.commit()
                     conn.close()
                     return 0
@@ -176,34 +176,37 @@ class State:
     def authenticate(self,username,password):
         """Log in a user that's already registered"""
         if username not in self.loggedin_usernames:
-            if username in self.users:
-                conn = connect_db()
-                cur = conn.cursor()
-                try: 
-                    cur.execute('SELECT status FROM `user` WHERE username=?', (username,))
-                    row = cur.fetchone()
-                    if row[0] == 1:
-                        u = self.users[username]
-                        if bcrypt.checkpw(password.encode(), u.password):
-                            # Log in the user
-                            self.loggedin_usernames.append(username)
-                            conn.commit()
-                            conn.close()
-                            return 0
-                        else:
-                            conn.commit()
-                            conn.close()
-                            return -1
+            #if username in self.users:
+            conn = connect_db()
+            cur = conn.cursor()
+            print("here")
+            try: 
+                cur.execute('SELECT password FROM `user` WHERE username=?', (username,))
+                row = cur.fetchone()
+                print(row[0])
+                if row[0] is not None:
+                    print(row[0])
+                    #u = self.users[username]
+                    if bcrypt.checkpw(password, row[0].encode()):
+                        # Log in the user
+                        self.loggedin_usernames.append(username)
+                        conn.commit()
+                        conn.close()
+                        return 0
                     else:
                         conn.commit()
                         conn.close()
                         return -1
-                except sqlite3.IntegrityError:
+                else:
                     conn.commit()
                     conn.close()
-                    return -1
-            else:
-                return -2
+                    return -2
+            except sqlite3.IntegrityError:
+                conn.commit()
+                conn.close()
+                return -1
+            #else:
+                #return -2
         else:
             return -3
 
@@ -213,12 +216,13 @@ class State:
 
     def update_pw(self, username, password):
         #update password given username and password; user logged in
-        self.users[username].password = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+        encrypted_newpw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+        self.users[username].password = encrypted_newpw
         self.update_pwd_db()
         conn = connect_db()
         cur = conn.cursor()
         try:
-            cur.execute('UPDATE `user` SET password=? WHERE username=?', (encrypted_newpwd, username))            
+            cur.execute('UPDATE `user` SET password=? WHERE username=?', (encrypted_newpw, username))            
             conn.commit()
             conn.close()
         except sqlite3.IntegrityError:
@@ -242,8 +246,8 @@ class State:
                             self.notify(user, msg.render())
                     #write to log
                     msg_log = fromuser + "> " + message + "\n"
-                    if (self.channels[to].msg_count >= 20):
-                        self.write_log(to, fromuser)
+                    if (self.channels[to].msg_count >= 2):
+                        self.write_log(to)
                     self.channels[to].current_log = self.channels[to].current_log + msg_log
                     self.channels[to].msg_count += 1
                     
@@ -264,7 +268,7 @@ class State:
             else:
                 self.notify(fromuser, "Error: Target user is not logged in or does not exist\n")
 
-    def write_log(self, channel, fromuser):
+    def write_log(self, channel):
         timestamp = str(int(round(time.time() * 1000)))
         log_name = "logs/log-" + channel[1:] + "-" + timestamp + ".log"
 
@@ -273,7 +277,7 @@ class State:
         kdf = PBKDF2HMAC(
                         algorithm=hashes.SHA256(),
                         length=32,
-                        salt=salt
+                        salt=salt,
                         iterations=100000,
                         backend=default_backend()
                         )
@@ -283,14 +287,7 @@ class State:
         encrypted_log = fernet.encrypt(log_str.encode())
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute('SELECT id FROM `user` WHERE username=? ', (fromuser, ))
-        row = cur.fetchone()
-        uid = row[0]
-        print("user id is %d" % uid)
-        cur.execute('SELECT id FROM `chats` WHERE user_id=? AND channelname=? AND ', (uid, channel))
-        row = cur.fetchone()
-        if row[0] is None:
-            cur.execute('INSERT INTO `chats` VALUES(NULL, ?, ?, ?)', (channel, uid, encrypted_log))
+        cur.execute('INSERT INTO `chats` VALUES(NULL, ?, NULL, ?)', (channel, encrypted_log))
         conn.commit()
         conn.close()
         with open(log_name, 'wb') as logfile:
@@ -302,6 +299,8 @@ class State:
         self.channels[channel].msg_count = 0
 
     def join(self, user, channel_name):
+        conn = connect_db()
+        cur = conn.cursor()
         if channel_name.startswith("#"):
             if channel_name in self.channels:
                 channel = self.channels[channel_name]
@@ -312,9 +311,20 @@ class State:
                         self.notify(user, "Error: User is already a member of channel.\n")
                     else:
                         channel.members.append(user)
+                        cur.execute('SELECT members FROM `channels` where channelname=?', (channel_name,))
+                        row = cur.fetchone()
+                        newmem = row[0]
+                        newmem += ';'
+                        newmem += user
+                        cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (newmem, channel_name))
+                        conn.commit()
+                        conn.close()
                         self.notify(user, "Successfully joined channel!\n")
             else:
                 new_channel = Channel(channel_name, "Default topic", [user], user, [])
+                cur.execute('INSERT INTO `channels` VALUES(NULL, ?, ?, ?, ?, NULL, NULL)', (channel_name, user, user, "Default topic"))
+                conn.commit()
+                conn.close()
                 self.channels[channel_name] = new_channel
                 self.notify(user, "Channel created!\n")
         else:
@@ -336,6 +346,11 @@ class State:
             channel = self.channels[channel_name]
             if user == channel.admin:
                 channel.topic = new_topic
+                conn = connect_db()
+                cur = conn.cursor()
+                cur.execute('UPDATE `channels` SET topics=? WHERE channelname=?', (new_topic, channel_name))
+                conn.commit()
+                conn.close()
                 self.notify(user, "Topic reset!\n")
             else:
                 self.notify(user, "Error: Not permitted to reset channel topic!\n")
@@ -403,12 +418,11 @@ class State:
     def exit(self, user):
         self.loggedin_usernames.remove(user)
 
-    '''
+
     def server_exit(self):
         for key, val in self.channels.items():
             if val.msg_count > 0:
                self.write_log(key)
-    '''
 
     def exchangekey(self, fromuser, touser, key):
         if touser in self.users:
