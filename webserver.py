@@ -14,9 +14,18 @@ import sqlite3
 import sys
 import time
 import bcrypt
+import glob
+import sys
+import string
 import ssl
 import requests
-
+import base64
+import keyconfig
+import cryptography
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from bcrypt import hashpw, gensalt 
 
 from flask import Flask
@@ -133,7 +142,7 @@ def create_user(username, password):
     print("encrypted")
     print(encrypted_pw)
     try: 
-        cur.execute('INSERT INTO `user` VALUES(NULL,?,?, 1, NULL, NULL, NULL, NULL, NULL)', (username, encrypted_pw))
+        cur.execute('INSERT INTO `user` VALUES(NULL,?,?, ?, NULL, NULL, NULL, NULL, NULL)', (username, encrypted_pw, 1))
         cur.execute('SELECT id FROM `user` WHERE username= ?', (username,))
         row = cur.fetchone()
         conn.commit()
@@ -177,15 +186,48 @@ def create_chat(uid, content):
 def get_chats(channel_name, n):
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('SELECT id, user_id, content FROM `chats` WHERE id>=%d ORDER BY id ASC' % n)
+    cur.execute('SELECT id, content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
     rows = cur.fetchall()
     conn.commit()
     conn.close()
+    splits = rows[1].split('\n', 1)
+    salt = str.strip(splits[0])
+    msg_encrypted = splits[1]
+    msg_decrypted = ''
+    try:
+        kdf = PBKDF2HMAC(
+                        algorithm=hashes.SHA256(),
+                        length=32,
+                        salt=salt,
+                        iterations=100000,
+                        backend=default_backend()
+                        )
+        key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
+        fernet = Fernet(key)
+        msg_decrypted = fernet.decrypt(msg_encrypted)
+        print(msg_decrypted)
+        signature = str.strip(file.readline())
+        h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+        try:
+            h.update(msg_decrypted)
+            h.verify((signature))
+            print("Message authenticity confirmed! Message log is as follows: ")
+            print(msg_decrypted)
+        except cryptography.exceptions.InvalidSignature:
+            print("Invalid signature!")
+    except cryptography.fernet.InvalidToken:
+        print("Not permitted to read channel logs")
+
+    return list(map((lambda row: {'id': row[0],
+                       'content': utils.escape(msg_decrypted)}),
+                    rows))
+    '''
     return list(map((lambda row: {'id': row[0],
                        'user_id': row[1],
                        'content': utils.escape(row[2]),
                        'username': get_user_from_id(row[1])['username']}),
                     rows))
+    '''
 
 def get_channels(uid):
     #TO-DO: get channel list from sql similarly to get_chats
@@ -194,6 +236,8 @@ def get_channels(uid):
     cur.execute('SELECT channels FROM `user` WHERE id = ?', (uid,))
     row = cur.fetchone()
     if row[0] is None:
+        conn.commit()
+        conn.close()
         return list()
     else:
         print(row[0])
