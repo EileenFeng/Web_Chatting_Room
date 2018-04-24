@@ -127,6 +127,8 @@ def get_user_from_username_and_password(username, password):
         try:
             if bcrypt.checkpw(password.encode(), verify_pw):
                 cur.execute('UPDATE `user` SET status=? WHERE username=?', (1, username)) 
+                print("chats")
+                get_chats("#chan1", 0)
                 return {'id': row[0], 'username': username}
             else:
                 return None
@@ -247,11 +249,11 @@ def get_channels(uid):
             print(chan)
             if chan != '':
                 print("appending")
-                chan = '#'+chan
+                chan = '#' + chan
                 cur.execute('SELECT topics FROM `channels` WHERE channelname = ?', (chan,))
                 row = cur.fetchone()
-                #topic = row[0]
-                topic = "TOPIC"
+                topic = row[0]
+                #topic = "TOPIC"
                 chanlist.append((chan, topic))
         print(isinstance(chanlist, list))
         print(chanlist)
@@ -477,7 +479,7 @@ def create_channel():
         print(len(row))
         admin_name = row[0]
         print(admin_name)
-        channame = '#' + channame
+        #channame = '#' + channame
         cur.execute('INSERT INTO `channels` VALUES(NULL,?, ?, ?, ?, NULL, NULL);', (channame, admin_name, admin_name, topic))
         cur.execute('SELECT channels FROM `user` where username= ?', (admin_name,))
         row =cur.fetchone()
