@@ -45,14 +45,14 @@
         var getChatsFrom = 0;
         
         update = function() {
-            $.getJSON("/chats/from/" + getChatsFrom,function(chats) {
+            $.getJSON("/chats/chann",function(chats) {
                 //console.log("stupid chats from");
                 if (Array.isArray(chats)) {
                     messages.push(chats);
                     if (chats.length > 0) {
                         getChatsFrom = chats[chats.length-1].id+1;
                         chats.forEach(function(chat) {
-                            putMessage("> " + chat.username + ": " + chat.content + "\n");
+                            putMessage(chat.content + "\n");
                         });
                     }
                 }

@@ -5,26 +5,26 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<!--===============================================================================================-->
-	<link rel="icon" type="image/png" href="static/table/images/icons/favicon.ico"/>
+	<link rel="icon" type="image/png" href="../static/table/images/icons/favicon.ico"/>
 	<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="static/table/vendor/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/vendor/bootstrap/css/bootstrap.min.css">
 	<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="static/table/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
-	<link rel="stylesheet" type="text/css" href="static/login/fonts/Linearicons-Free-v1.0.0/icon-font.min.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="../static/login/fonts/Linearicons-Free-v1.0.0/icon-font.min.css">
 	<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="static/table/vendor/animate/animate.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/vendor/animate/animate.css">
 	<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="static/table/vendor/css-hamburgers/hamburgers.min.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/vendor/css-hamburgers/hamburgers.min.css">
 	<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="static/table/vendor/animsition/css/animsition.min.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/vendor/animsition/css/animsition.min.css">
 	<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="static/table/vendor/select2/select2.min.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/vendor/select2/select2.min.css">
 	<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="static/table/vendor/perfect-scrollbar/perfect-scrollbar.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/vendor/perfect-scrollbar/perfect-scrollbar.css">
 	<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="static/table/css/util.css">
-	<link rel="stylesheet" type="text/css" href="static/table/css/table.css">
-	<link rel="stylesheet" type="text/css" href="static/channel/css/channel.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/css/util.css">
+	<link rel="stylesheet" type="text/css" href="../static/table/css/table.css">
+	<link rel="stylesheet" type="text/css" href="../static/channel/css/channel.css">
 	<!--===============================================================================================-->
 </head>
 <body>
@@ -37,7 +37,7 @@
 					<table data-vertable="ver2">
 						<thead>
 							<tr class="row100 head">
-								<th class="column100 column1" data-column="column1">Chat Window {{channel_name}}</th>
+								<th class="column100 column1" data-column="column1">Chat Window #{{channel_name}}</th>
 								<th class="column100 column1" data-column="column2">File Window</th>
 							</tr>
 						</thead>
@@ -47,23 +47,20 @@
 								<td class="column100 column1" data-column="column1">
 									<div class="chat_window">
 										<div class="top_menu">
-											<div class="title">Chat (Logged in as @{{user}})</div>
+											<div class="title">messages for user: {{user}}</div>
 										</div>
-
 										<ul class="messages"></ul>
-										
 									</td>
 									<td> 
-										<div class="file_list">
-											<p> bz </p>
-										</div>
+										
 									</td>
 								</tr>
 
 								<tr class="row100">
-									<td class="column100 column1" data-column="column1"> <div class="bottom_wrapper clearfix">
+									<td class="column100 column1" data-column="column1"> 
+									<div class="bottom_wrapper clearfix">
 											<div class="message_input_wrapper">
-												<input class="message_input" placeholder="Type your message here..." /></div>
+												<input class="message_input" /></div>
 												<div class="send_message">
 													<div class="icon"></div>
 													<div class="text">Send</div>
@@ -71,7 +68,10 @@
 											</div>
 										</div>
 										</td>
-									<td class="column100 column2" data-column="column2"><button>Upload</button> <button>Another</button><button>Third</button></td>
+									<td class="column100 column2" data-column="column2">
+									<button>Upload</button> 
+									<button>Another</button>
+									<button>Third</button></td>
 								</tr>
 							</tbody>
 						</table>
@@ -80,15 +80,15 @@
 			</div>
 		</div>
 		<!--===============================================================================================-->
-		<script src="static/table/vendor/jquery/jquery-3.2.1.min.js"></script><!--===============================================================================================-->
-		<script src="static/table/vendor/animsition/js/animsition.min.js"></script>
+		<script src="../static/table/vendor/jquery/jquery-3.2.1.min.js"></script><!--===============================================================================================-->
+		<script src="../static/table/vendor/animsition/js/animsition.min.js"></script>
 		<!--===============================================================================================-->
-		<script src="static/table/vendor/bootstrap/js/popper.js"></script>
-		<script src="static/table/vendor/bootstrap/js/bootstrap.min.js"></script>
+		<script src="../static/table/vendor/bootstrap/js/popper.js"></script>
+		<script src="../static/table/vendor/bootstrap/js/bootstrap.min.js"></script>
 		<!--===============================================================================================-->
-		<script src="static/table/vendor/select2/select2.min.js"></script>
+		<script src="../static/table/vendor/select2/select2.min.js"></script>
 		<!--===============================================================================================-->
-		<script src="static/channel/js/channel.js"></script>
+		<script src="../static/channel/js/channel.js"></script>
 
 	</body>
 	</html>
