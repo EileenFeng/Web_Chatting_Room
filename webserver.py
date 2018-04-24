@@ -201,60 +201,72 @@ def get_chats(channel_name, n):
     cur = conn.cursor()
     print("1getcha")
     print(channel_name)
-    cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
-    print("wata")
-    rows = cur.fetchall()
-    conn.commit()
-    conn.close()
-    print("2getcha")
-    print(rows)
-    #did not write salt!!!
-    if len(rows) != 0:
-        print(rows[0][0])
-        splits = rows[0][0].split('\n', 2)
-        print(splits)
-        salt = str.strip(splits[0])
-        msg_encrypted = splits[1]
-        signature = splits[2]
-        print(msg_encrypted)
-        print("3")
-        msg_decrypted = ''
-        try:
-            kdf = PBKDF2HMAC(
-                            algorithm=hashes.SHA256(),
-                            length=32,
-                            salt=salt,
-                            iterations=100000,
-                            backend=default_backend()
-                            )
-            key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
-            fernet = Fernet(key)
-            msg_decrypted = fernet.decrypt(msg_encrypted)
-            print(msg_decrypted)
-            #signature = str.strip(file.readline())
-            h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-            try:
-                h.update(msg_decrypted)
-                h.verify((signature))
-                print("Message authenticity confirmed! Message log is as follows: ")
-                print(msg_decrypted)
-            except cryptography.exceptions.InvalidSignature:
-                print("Invalid signature!")
-        except cryptography.fernet.InvalidToken:
-            print("Not permitted to read channel logs")
-
+    try: 
+        cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
+        print("wata")
+        rows = cur.fetchall()
+        conn.commit()
+        conn.close()
+        print("2getcha %d" % len(rows))
+        print(rows)
+        result_list = list()
+        #did not write salt!!!
+        if len(rows) != 0:
+            for r in rows:
+                print("lenth of cur is %d" % len(r))
+                print(r[0])
+                splits = r[0].split('\n', 2)
+                print("after split")
+                print(splits)
+                salt = str.strip(splits[0])
+                msg_encrypted = splits[1]
+                signature = splits[2]
+                print("encrypted")
+                print(msg_encrypted)
+                print("3")
+                msg_decrypted = ''
+                try:
+                    kdf = PBKDF2HMAC(
+                                    algorithm=hashes.SHA256(),
+                                    length=32,
+                                    salt=salt,
+                                    iterations=100000,
+                                    backend=default_backend()
+                                    )
+                    key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
+                    fernet = Fernet(key)
+                    msg_decrypted = fernet.decrypt(msg_encrypted)
+                    #signature = str.strip(file.readline())
+                    h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+                    try:
+                        h.update(msg_decrypted)
+                        h.verify((signature))
+                        print("Message authenticity confirmed! Message log is as follows: ")
+                        print(msg_decrypted)
+                        result_list.append(msg_decrypted)
+                    except cryptography.exceptions.InvalidSignature:
+                        print("Invalid signature!")
+                except cryptography.fernet.InvalidToken:
+                    print("Not permitted to read channel logs")
+            print(result_list)
+            return result_list
+        else:
+            return list()
+        '''
         return list(map((lambda row: {'id': row[0],
-                        'content': utils.escape(msg_decrypted)}),
+                            'content': utils.escape(msg_decrypted)}),
+                            rows))
+                
+        return list(map((lambda row: {'id': row[0],
+                        'user_id': row[1],
+                        'content': utils.escape(row[2]),
+                        'username': get_user_from_id(row[1])['username']}),
                         rows))
-    else:
+        '''
+    except sqlite3.IntegrityError:
+        conn.commit()
+        conn.close()
         return list()
-    '''
-    return list(map((lambda row: {'id': row[0],
-                       'user_id': row[1],
-                       'content': utils.escape(row[2]),
-                       'username': get_user_from_id(row[1])['username']}),
-                    rows))
-    '''
 
 def get_channels(uid):
     #TO-DO: get channel list from sql similarly to get_chats
@@ -386,7 +398,9 @@ def do_login(user):
     if user is not None:
         print("not null")
         session['uid'] = user['id']
-        #get_chats('#chan1', 0)
+        print("before chats")
+        get_chats('#chan1', 0)
+        print("after chants")
         return redirect('/')
     else:
         print("User is none")
