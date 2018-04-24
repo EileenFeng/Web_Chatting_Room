@@ -358,10 +358,10 @@ def change_pwd():
 #     else:
 #         return jsonify("Not logged in")
 
-@app.route('/chats', methods=['GET'])
-def chats():
+@app.route('/chats/<channel_name>', methods=['GET'])
+def chats(channel_name):
     if 'uid' in session:
-        channel_name = request.form['channel_name']
+        #channel_name = request.form['channel_name']
         return jsonify(get_chats(channel_name, 0))
     else:
         return jsonify("Error: not logged in!")
@@ -386,7 +386,7 @@ def do_login(user):
     if user is not None:
         print("not null")
         session['uid'] = user['id']
-        get_chats('#chan1', 0)
+        #get_chats('#chan1', 0)
         return redirect('/')
     else:
         print("User is none")
