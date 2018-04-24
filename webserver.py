@@ -19,10 +19,12 @@ import sys
 import string
 import ssl
 import requests
+import struct
 import json
 import base64
 import keyconfig
 import cryptography
+from Crypto.Cipher import AES
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
@@ -33,6 +35,7 @@ from flask import redirect
 from flask import jsonify
 from flask import request
 from flask import session
+from flask import flash
 from flask import render_template
 from flask import send_from_directory
 from jinja2 import Template
@@ -87,6 +90,13 @@ def create_tables():
         content BLOB,
         FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
         )''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS files(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename VARCHAR(32),
+        username INTEGER,
+        channelname VARCHAR(32)
+        )''')
     conn.commit()
     conn.close()
 
@@ -136,6 +146,7 @@ def get_user_from_username_and_password(username, password):
                 return {'id': row[0], 'username': username}
             else:
                 print("noooo")
+                flash('Username or password error')
                 conn = connect_db()
                 cur = conn.cursor()
                 return None
@@ -165,6 +176,7 @@ def create_user(username, password):
         else:
             return None
     except sqlite3.IntegrityError:
+        flash(u'You have already registered', 'error')
         conn.commit()
         conn.close()
         print("failed")
@@ -415,8 +427,13 @@ def do_login(user):
         if 'uid' in session:
             session.pop('uid')
         #TO-DO: wrong pwd alert & redirect back to login
-        return redirect('/create_account')
+        return redirect('/login')
 
+#@app.route('/upload_file/<channelname>/<filename>')
+#def upload_file(channelname, filename):
+
+
+# needs to adapt to requests form
 @app.route('/download_file/<channelname>/<filename>')
 def download_file(channelname, filename):
     if 'uid' not in session:
@@ -427,10 +444,10 @@ def download_file(channelname, filename):
     print(filename)
     channelname = '#'+channelname
     try:
-        cur.execute('SELECT channelname, filenames FROM `channels` WHERE channelname=?', (channelname,))
+        cur.execute('SELECT channelname, filename FROM `files` WHERE channelname=? AND filename = filename', (channelname, filename))
         row = cur.fetchone()
-        print(row[0])
-        if row[0] is not None:
+        if row is not None:
+            print(row[0])
             print(row[1])
             if row[1] is not None:
                 filepath = channelname + '/'+filename
