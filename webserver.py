@@ -84,7 +84,7 @@ def create_tables():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channelname VARCHAR(32),
         user_id INTEGER,
-        content TEXT,
+        content BLOB,
         FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
         )''')
     conn.commit()
@@ -123,16 +123,26 @@ def get_user_from_username_and_password(username, password):
     row = cur.fetchone()
     print (row)
     if row is not None:
+        print("1")
         verify_pw = row[1].encode()
+        print("2")
+        print(verify_pw)
         try:
             if bcrypt.checkpw(password.encode(), verify_pw):
+                print("here?")
                 cur.execute('UPDATE `user` SET status=? WHERE username=?', (1, username)) 
-                print("chats")
-                get_chats("#chan1", 0)
+                conn.commit()
+                conn.close()
                 return {'id': row[0], 'username': username}
             else:
+                print("noooo")
+                conn = connect_db()
+                cur = conn.cursor()
                 return None
         except Exception, e:
+            print(e)
+            conn = connect_db()
+            cur = conn.cursor()
             return None
     else:
         return None
@@ -188,41 +198,55 @@ def create_chat(uid, content):
 def get_chats(channel_name, n):
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('SELECT id, content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
+    print("1getcha")
+    print(channel_name)
+    cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
+    print("wata")
     rows = cur.fetchall()
     conn.commit()
     conn.close()
-    splits = rows[1].split('\n', 1)
-    salt = str.strip(splits[0])
-    msg_encrypted = splits[1]
-    msg_decrypted = ''
-    try:
-        kdf = PBKDF2HMAC(
-                        algorithm=hashes.SHA256(),
-                        length=32,
-                        salt=salt,
-                        iterations=100000,
-                        backend=default_backend()
-                        )
-        key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
-        fernet = Fernet(key)
-        msg_decrypted = fernet.decrypt(msg_encrypted)
-        print(msg_decrypted)
-        signature = str.strip(file.readline())
-        h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+    print("2getcha")
+    print(rows)
+    #did not write salt!!!
+    if len(rows) != 0:
+        print(rows[0])
+        splits = rows[0].split('\n', 2)
+        print(splits)
+        salt = str.strip(splits[0])
+        msg_encrypted = splits[1]
+        signature = splits[2].finalize()
+        print(msg_encrypted)
+        print("3")
+        msg_decrypted = ''
         try:
-            h.update(msg_decrypted)
-            h.verify((signature))
-            print("Message authenticity confirmed! Message log is as follows: ")
+            kdf = PBKDF2HMAC(
+                            algorithm=hashes.SHA256(),
+                            length=32,
+                            salt=salt,
+                            iterations=100000,
+                            backend=default_backend()
+                            )
+            key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
+            fernet = Fernet(key)
+            msg_decrypted = fernet.decrypt(msg_encrypted)
             print(msg_decrypted)
-        except cryptography.exceptions.InvalidSignature:
-            print("Invalid signature!")
-    except cryptography.fernet.InvalidToken:
-        print("Not permitted to read channel logs")
+            #signature = str.strip(file.readline())
+            h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+            try:
+                h.update(msg_decrypted)
+                h.verify((signature))
+                print("Message authenticity confirmed! Message log is as follows: ")
+                print(msg_decrypted)
+            except cryptography.exceptions.InvalidSignature:
+                print("Invalid signature!")
+        except cryptography.fernet.InvalidToken:
+            print("Not permitted to read channel logs")
 
-    return list(map((lambda row: {'id': row[0],
-                       'content': utils.escape(msg_decrypted)}),
-                    rows))
+        return list(map((lambda row: {'id': row[0],
+                        'content': utils.escape(msg_decrypted)}),
+                        rows))
+    else:
+        return list()
     '''
     return list(map((lambda row: {'id': row[0],
                        'user_id': row[1],
@@ -253,7 +277,6 @@ def get_channels(uid):
                 cur.execute('SELECT topics FROM `channels` WHERE channelname = ?', (chan,))
                 row = cur.fetchone()
                 topic = row[0]
-                #topic = "TOPIC"
                 chanlist.append((chan, topic))
         print(isinstance(chanlist, list))
         print(chanlist)
@@ -506,6 +529,7 @@ def create_channel():
             if row[0] is not None:
                 conn.commit()
                 conn.close()
+                get_chats('#chan1', 0)
                 #return "success", 200
                 return render_channel_table(uid, get_channels(session['uid']))
         else:
