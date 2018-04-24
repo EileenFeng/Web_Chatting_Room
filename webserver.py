@@ -16,9 +16,9 @@ import time
 import bcrypt
 import ssl
 import requests
+import json
 
 from bcrypt import hashpw, gensalt 
-
 from flask import Flask
 from flask import redirect
 from flask import jsonify
@@ -207,7 +207,9 @@ def get_channels(uid):
                 print("appending")
                 chanlist.append(chan)
         print(isinstance(chan, list))
-        print(chanlist)
+        print("Channel list:  ")
+        for i in chanlist:
+            print i
         return chanlist
 
 
@@ -291,6 +293,13 @@ def chats():
     else:
         return jsonify("Error: not logged in!")
 
+@app.route('/channels', methods=['GET'])
+def channels():
+    if 'uid' in session:
+        return jsonify(get_channels(session['uid']))
+    else:
+        return jsonify("Error: not logged in!")
+
 @app.route('/chats/from/<n>', methods=['GET'])
 def chats_from(n):
     if 'uid' in session:
@@ -304,7 +313,8 @@ def render_home_page(uid):
 
 def render_channel_table(uid, channel_data):
     user = get_user_from_id(uid)
-    return render_template('table.html', uid=uid, user=user['username'])
+    #print("BZ channel_data: " + channel_data)
+    return render_template('table.html', uid=uid, user=user['username'], channel_data=json.dumps(channel_data))
 
 def do_login(user):
     if user is not None:
@@ -455,7 +465,7 @@ def create_channel():
                 conn.commit()
                 conn.close()
                 #return "success", 200
-                return render_channel_table(uid, jsonify(get_channels(session['uid'])))
+                return render_channel_table(uid, get_channels(session['uid']))
         else:
             conn.commit()
             conn.close()
@@ -498,7 +508,7 @@ def index():
         #return render_home_page(session['uid'])
         print("in uid in session index")
         print(session['uid'])
-        return render_channel_table(session['uid'], jsonify(get_channels(session['uid'])))
+        return render_channel_table(session['uid'], get_channels(session['uid']))
     return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])

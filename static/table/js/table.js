@@ -1,6 +1,41 @@
 
 (function ($) {
 	"use strict";
+
+	$.getJSON("/channels", function(channels) {
+		console.log("in here?");
+		var tableBody = document.getElementById("table_body");
+		if (Array.isArray(channels)) {
+			console.log("isArray");
+			var str = ""
+			if (channels.length > 0) {
+				channels.forEach(function(channel) {
+					console.log(channel);
+					var row = tableBody.insertRow(tableBody.rows.length-1);
+					row.setAttribute("class", "row100");
+
+					var cellOne = row.insertCell(0);
+					cellOne.setAttribute("class", "column100 column1");
+					cellOne.setAttribute("data-column", "column1");
+					var button = document.createElement("BUTTON");
+					button.innerHTML = channel;
+					cellOne.appendChild(button);
+
+					var cellTwo = row.insertCell(1);
+					cellOne.setAttribute("class", "column100 column2");
+					cellOne.setAttribute("data-column", "column2");
+					cellTwo.innerHTML = "CHANNEL TOPIC HERE";
+
+					console.log(row);
+					//str = str.concat("<tr class=\"row100\">\n<td class=\"column100 column1\" data-column=\"column1\">");
+					//str = str.concat(channel);
+					//str = str.concat("</td>\n<td class=\"column100 column2\" data-column=\"column2\">Channel topic [FILL OUT]</td></tr>");
+				});
+			}
+		}
+	});
+
+
 	$('.column100').on('mouseover',function(){
 		var table1 = $(this).parent().parent().parent();
 		var table2 = $(this).parent().parent();
@@ -69,7 +104,7 @@
 
 	    	$(thisAlert).removeClass('alert-validate');
 	    }
-	    
+
 
 	})(jQuery);
 
@@ -79,24 +114,16 @@
 	};
 
 	document.getElementById('myModal').style.display = "none";
-	// Get the modal
 	var modal = document.getElementById('myModal');
-
 	var span = document.getElementsByClassName("close")[0];
-	// Get the button that opens the modal
 	var btn = document.getElementById("add_chan_btn");
 
-	// When the user clicks on the button, open the modal 
 	btn.onclick = function() {
 		modal.style.display = "block";
 	}
-
-	// When the user clicks on <span> (x), close the modal
 	span.onclick = function() {
 		modal.style.display = "none";
 	}
-
-	// When the user clicks anywhere outside of the modal, close it
 	window.onclick = function(event) {
 		if (event.target == modal) {
 			modal.style.display = "none";
