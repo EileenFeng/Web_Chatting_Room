@@ -386,7 +386,7 @@ def do_login(user):
     if user is not None:
         print("not null")
         session['uid'] = user['id']
-        get_chats('#chan1', 0)
+        #get_chats('#chan1', 0)
         return redirect('/')
     else:
         print("User is none")
