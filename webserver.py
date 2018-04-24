@@ -75,7 +75,7 @@ def create_tables():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channelname VARCHAR(32),
         user_id INTEGER,
-        context TEXT,
+        content TEXT,
         FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
         )''')
     conn.commit()
@@ -174,7 +174,7 @@ def create_chat(uid, content):
     conn.close()
     return row
 
-def get_chats(n):
+def get_chats(channel_name, n):
     conn = connect_db()
     cur = conn.cursor()
     cur.execute('SELECT id, user_id, content FROM `chats` WHERE id>=%d ORDER BY id ASC' % n)
@@ -193,8 +193,6 @@ def get_channels(uid):
     cur = conn.cursor()
     cur.execute('SELECT channels FROM `user` WHERE id = ?', (uid,))
     row = cur.fetchone()
-    conn.commit()
-    conn.close()
     if row[0] is None:
         return list()
     else:
@@ -205,9 +203,15 @@ def get_channels(uid):
             print(chan)
             if chan != '':
                 print("appending")
-                chanlist.append(chan)
-        print(isinstance(chan, list))
+                chan = '#'+chan
+                cur.execute('SELECT topics FROM `channels` WHERE channelname = ?', (chan,))
+                row = cur.fetchone()
+                topic = row[0]
+                chanlist.append((chan, topic))
+        print(isinstance(chanlist, list))
         print(chanlist)
+        conn.commit()
+        conn.close()
         return chanlist
 
 
@@ -287,16 +291,19 @@ def change_pwd():
 @app.route('/chats', methods=['GET'])
 def chats():
     if 'uid' in session:
-        return jsonify(get_chats(0))
+        channel_name = request.form['channel_name']
+        return jsonify(get_chats(channel_name, 0))
     else:
         return jsonify("Error: not logged in!")
 
+'''
 @app.route('/chats/from/<n>', methods=['GET'])
 def chats_from(n):
     if 'uid' in session:
         return jsonify(get_chats(int(n)))
     else:
         return jsonify("Error: not logged in!")
+'''
 
 def render_home_page(uid):
     user = get_user_from_id(uid)
