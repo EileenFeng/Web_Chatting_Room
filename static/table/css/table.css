@@ -230,14 +230,14 @@ th, td {
   font-family: Montserrat-Regular;
   font-size: 14px;
   color: #808080;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 .table100.ver2 th {
   font-family: Montserrat-Medium;
   font-size: 14px;
   color: #fff;
-  line-height: 1.8;
+  line-height: 2;
   text-transform: uppercase;
 
   background-color: #333333;

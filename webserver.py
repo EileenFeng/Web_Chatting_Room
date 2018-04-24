@@ -19,6 +19,10 @@ import sys
 import string
 import ssl
 import requests
+<<<<<<< HEAD
+import json
+
+=======
 import base64
 import keyconfig
 import cryptography
@@ -26,8 +30,8 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+>>>>>>> 108fdfd4d71828d0951c9dc5c980e6f5dfd7d18c
 from bcrypt import hashpw, gensalt 
-
 from flask import Flask
 from flask import redirect
 from flask import jsonify
@@ -258,7 +262,6 @@ def get_channels(uid):
         conn.close()
         return chanlist
 
-
 def user_delete_chat_of_id(uid, tid):
     conn = connect_db()
     cur = conn.cursor()
@@ -340,14 +343,12 @@ def chats():
     else:
         return jsonify("Error: not logged in!")
 
-'''
-@app.route('/chats/from/<n>', methods=['GET'])
-def chats_from(n):
+@app.route('/channels', methods=['GET'])
+def channels():
     if 'uid' in session:
-        return jsonify(get_chats(int(n)))
+        return jsonify(get_channels(session['uid']))
     else:
         return jsonify("Error: not logged in!")
-'''
 
 def render_home_page(uid):
     user = get_user_from_id(uid)
@@ -355,7 +356,8 @@ def render_home_page(uid):
 
 def render_channel_table(uid, channel_data):
     user = get_user_from_id(uid)
-    return render_template('table.html', uid=uid, user=user['username'])
+    #print("BZ channel_data: " + channel_data)
+    return render_template('table.html', uid=uid, user=user['username'], channel_data=json.dumps(channel_data))
 
 def do_login(user):
     if user is not None:
@@ -506,7 +508,7 @@ def create_channel():
                 conn.commit()
                 conn.close()
                 #return "success", 200
-                return render_channel_table(uid, jsonify(get_channels(session['uid'])))
+                return render_channel_table(uid, get_channels(session['uid']))
         else:
             conn.commit()
             conn.close()
@@ -549,7 +551,7 @@ def index():
         #return render_home_page(session['uid'])
         print("in uid in session index")
         print(session['uid'])
-        return render_channel_table(session['uid'], jsonify(get_channels(session['uid'])))
+        return render_channel_table(session['uid'], get_channels(session['uid']))
     return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
