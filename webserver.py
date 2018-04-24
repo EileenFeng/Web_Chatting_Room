@@ -375,7 +375,7 @@ def channels():
 
 def render_home_page(uid):
     user = get_user_from_id(uid)
-    return render_template('chats.html', uid=uid, user=user['username'])
+    return render_template('table.html', uid=uid, user=user['username'])
 
 def render_channel_table(uid, channel_data):
     user = get_user_from_id(uid)
@@ -470,7 +470,9 @@ def download_file(channelname, filename):
         conn.close()
         return "Not Found", 404
 
-
+@app.route('/test_chat')
+def test_chat():
+    return render_template("channel.html")
 
 @app.route('/create_account', methods=['GET', 'POST'])
 def create_account():

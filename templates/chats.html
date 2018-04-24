@@ -2,10 +2,10 @@
 <head>
   <title>SquirrelChat</title>
   <link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/css/style.css" rel="stylesheet" id="bootstrap-css">
+  <link href="static/channel/css/channel.css" rel="stylesheet" id="bootstrap-css">
   <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
   <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-  <script src="/js/chat.js"></script>
+  <script src="static/channel/js/channel.js"></script>
 </head>
 <body>
   <a href="/logout">Logout</a>
@@ -13,7 +13,7 @@
   <div style="width: 400px; margin: 80px auto; ">
     <table style="width=100%">
       <tr>
-        <th>
+        <td class="cell_one">
           <div class="chat_window">
             <div class="top_menu">
               <div class="buttons">
@@ -34,13 +34,12 @@
                 </div>
               </div>
             </div>
-          </th>
-          <th>
-            <div class="file_window">
-              <!-- TODO -->
-              File view
-            </div>
-          </th>
+          </td>
+        <td> 
+        <div class="file_list">
+          <p> bz </p>
+        </div>
+        </td>
         </tr>
       </table>
       
