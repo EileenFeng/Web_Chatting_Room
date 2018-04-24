@@ -7,10 +7,11 @@
 		var tableBody = document.getElementById("table_body");
 		if (Array.isArray(channels)) {
 			console.log("isArray");
-			var str = ""
 			if (channels.length > 0) {
 				channels.forEach(function(channel) {
-					console.log(channel);
+					var channel_name = channel[0];
+					var channel_topic = channel[1];
+					console.log("name: " + channel_name +", topic: " + channel_topic);
 					var row = tableBody.insertRow(tableBody.rows.length-1);
 					row.setAttribute("class", "row100");
 
@@ -18,18 +19,15 @@
 					cellOne.setAttribute("class", "column100 column1");
 					cellOne.setAttribute("data-column", "column1");
 					var button = document.createElement("BUTTON");
-					button.innerHTML = channel;
+					button.innerHTML = channel_name;
 					cellOne.appendChild(button);
 
 					var cellTwo = row.insertCell(1);
 					cellOne.setAttribute("class", "column100 column2");
 					cellOne.setAttribute("data-column", "column2");
-					cellTwo.innerHTML = "CHANNEL TOPIC HERE";
+					cellTwo.innerHTML = channel_topic;
 
 					console.log(row);
-					//str = str.concat("<tr class=\"row100\">\n<td class=\"column100 column1\" data-column=\"column1\">");
-					//str = str.concat(channel);
-					//str = str.concat("</td>\n<td class=\"column100 column2\" data-column=\"column2\">Channel topic [FILL OUT]</td></tr>");
 				});
 			}
 		}

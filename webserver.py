@@ -250,7 +250,8 @@ def get_channels(uid):
                 chan = '#'+chan
                 cur.execute('SELECT topics FROM `channels` WHERE channelname = ?', (chan,))
                 row = cur.fetchone()
-                topic = row[0]
+                #topic = row[0]
+                topic = "TOPIC"
                 chanlist.append((chan, topic))
         print(isinstance(chanlist, list))
         print(chanlist)
