@@ -373,6 +373,14 @@ def channels():
     else:
         return jsonify("Error: not logged in!")
 
+@app.route('/channel/<channel_name>')
+def channel(channel_name):
+    if 'uid' in session:
+        user = get_user_from_id(session['uid'])
+        return render_template("channel.html", channel_name = channel_name, user=user['username'])
+    else:
+        return redirect('/')
+
 def render_home_page(uid):
     user = get_user_from_id(uid)
     return render_template('table.html', uid=uid, user=user['username'])

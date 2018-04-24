@@ -18,9 +18,13 @@
 					var cellOne = row.insertCell(0);
 					cellOne.setAttribute("class", "column100 column1");
 					cellOne.setAttribute("data-column", "column1");
+					var link = document.createElement("A");
+					link.setAttribute("href", "/channel/" + channel_name.substring(1));
 					var button = document.createElement("BUTTON");
 					button.innerHTML = channel_name;
-					cellOne.appendChild(button);
+
+					cellOne.appendChild(link);
+					link.appendChild(button);
 
 					var cellTwo = row.insertCell(1);
 					cellOne.setAttribute("class", "column100 column2");

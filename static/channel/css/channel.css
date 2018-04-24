@@ -49,7 +49,7 @@ body {
 }
 .top_menu .title {
   text-align: center;
-  color: #bcbdc0;
+  color: #19692f;
   font-size: 20px;
 }
 
@@ -159,6 +159,14 @@ body {
   color: gray;
   background-color: #eaf8e6;
 }
+
+.bottom_wrapper:hover .message_input_wrapper:hover .message_input:hover {
+  background-color: #57b846;
+  color: white;
+
+  border: 1px solid white;
+}
+
 .bottom_wrapper .send_message {
   width: 140px;
   height: 50px;
