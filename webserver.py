@@ -19,10 +19,7 @@ import sys
 import string
 import ssl
 import requests
-<<<<<<< HEAD
 import json
-
-=======
 import base64
 import keyconfig
 import cryptography
@@ -30,7 +27,6 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
->>>>>>> 108fdfd4d71828d0951c9dc5c980e6f5dfd7d18c
 from bcrypt import hashpw, gensalt 
 from flask import Flask
 from flask import redirect
