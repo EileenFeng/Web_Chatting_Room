@@ -188,29 +188,7 @@ def get_chats(n):
                     rows))
 
 def get_channels(uid):
-    #TO-DO: get channel list from sql similarly to get_chats
-    conn = connect_db()
-    cur = conn.cursor()
-    cur.execute('SELECT channels FROM `user` WHERE id = ?', (uid,))
-    row = cur.fetchone()
-    conn.commit()
-    conn.close()
-    if row[0] is None:
-        return list()
-    else:
-        print(row[0])
-        res = row[0].split('#')
-        chanlist = list()
-        for chan in res:
-            print(chan)
-            if chan != '':
-                print("appending")
-                chanlist.append(chan)
-        print(isinstance(chan, list))
-        print("Channel list:  ")
-        for i in chanlist:
-            print i
-        return chanlist
+    return chanlist
 
 
 def user_delete_chat_of_id(uid, tid):
