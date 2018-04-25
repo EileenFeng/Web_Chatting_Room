@@ -176,7 +176,8 @@ def create_user(username, password):
         else:
             return None
     except sqlite3.IntegrityError:
-        flash(u'You have already registered', 'error')
+        #flash(u'You have already registered', 'error')
+        flash(u'The username has already been used', 'error')
         conn.commit()
         conn.close()
         print("failed")
@@ -525,7 +526,6 @@ def create_account():
         user = create_user(username, password)
         print(user)
         return do_login(user)
-
 
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
