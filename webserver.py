@@ -573,7 +573,6 @@ def create_account():
         print(user)
         return do_login(user)
 
-
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
     print('in create channel')
