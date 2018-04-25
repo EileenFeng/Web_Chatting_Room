@@ -350,6 +350,15 @@ class State:
                             newmem += ';'
                             newmem += user
                             cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (newmem, channel_name))
+                            # update channels for user
+                            cur.execute('SELECT channels FROM `user` where username=?', (user,))
+                            rowc = cur.fetchone()
+                            channel_list = rowc[0]
+                            if channel_list is None:
+                                channel_list = channel_name
+                            else:
+                                channel_list += channel_name
+                            cur.execute('UPDATE `user` SET channels=? WHERE username=?', (channel_list, user))
                             conn.commit()
                             conn.close()
                             self.notify(user, "Successfully joined channel!\n")
