@@ -174,14 +174,14 @@ def create_user(username, password):
         cur.execute('SELECT id FROM `user` WHERE username= ?', (username,))
         row = cur.fetchone()
         conn.commit()
-        conn.close()
+        conn.close()    
         if row is not None:
             print("here")
             return {'id': row[0], 'username': username} 
         else:
             return None
     except sqlite3.IntegrityError:
-        flash(u'Username have already registered', 'error')
+        flash(u'Username have already used', 'error')
         conn.commit()
         conn.close()
         print("failed")
