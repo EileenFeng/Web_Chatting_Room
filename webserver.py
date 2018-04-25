@@ -20,6 +20,7 @@ import string
 import ssl
 import requests
 import struct
+import random
 import json
 import base64
 import keyconfig
@@ -146,7 +147,7 @@ def get_user_from_username_and_password(username, password):
                 return {'id': row[0], 'username': username}
             else:
                 print("noooo")
-                flash('Username or password error')
+                flash(u'Username or password error', 'error')
                 conn = connect_db()
                 cur = conn.cursor()
                 return None
@@ -176,7 +177,7 @@ def create_user(username, password):
         else:
             return None
     except sqlite3.IntegrityError:
-        flash(u'You have already registered', 'error')
+        flash(u'Username have already registered', 'error')
         conn.commit()
         conn.close()
         print("failed")
@@ -211,16 +212,18 @@ def get_chats(channel_name, n):
     conn = connect_db()
     conn.text_factory = str
     cur = conn.cursor()
-    print("1getcha")
+    channel_name = '#' + channel_name
+    print("getcha")
     print(channel_name)
     try: 
-        cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
+        #cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
+        cur.execute('SELECT content FROM `chats` WHERE channelname = ?', (channel_name,))
         print("wata")
         rows = cur.fetchall()
-        conn.commit()
-        conn.close()
         print("2getcha %d" % len(rows))
         print(rows)
+        conn.commit()
+        conn.close()
         result_list = list()
         #did not write salt!!!
         if len(rows) != 0:
@@ -419,7 +422,7 @@ def do_login(user):
         print("not null")
         session['uid'] = user['id']
         print("before chats")
-        get_chats('#chan1', 0)
+        get_chats('chan1', 0)
         print("after chants")
         return redirect('/')
     else:
