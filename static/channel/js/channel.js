@@ -1,4 +1,5 @@
 (function () {
+    console.log("in channel.js");
     var Message;
     Message = function (arg) {
         this.text = arg.text, this.message_side = arg.message_side;
@@ -24,6 +25,7 @@
             return $message_input.val();
         };
         putMessage = function (text) {
+            console.log("PUTMESSAGE");
             var $messages, message;
             if (text.trim() === '') {
                 return;
@@ -36,6 +38,7 @@
                 message_side: message_side
             });
             message.draw();
+            console.log("BERFORE RETURNING");
             return $messages.animate({ scrollTop: $messages.prop('scrollHeight') }, 300);
         };
         // Track all of the chats we've seen -- Don't strictly need
@@ -45,12 +48,14 @@
         var getChatsFrom = 0;
         
         update = function() {
+            console.log("here");
+            putMessage("aaaaaaa");
+            //console.log("Channel: " + {{channel_name}}); 
             $.getJSON("/chats/chann",function(chats) {
-                //console.log("stupid chats from");
+                putMessage("aaaaaaa");
                 if (Array.isArray(chats)) {
                     messages.push(chats);
                     if (chats.length > 0) {
-                        getChatsFrom = chats[chats.length-1].id+1;
                         chats.forEach(function(chat) {
                             putMessage(chat.content + "\n");
                         });

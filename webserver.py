@@ -361,6 +361,10 @@ def change_pwd():
 @app.route('/chats/<channel_name>', methods=['GET'])
 def chats(channel_name):
     if 'uid' in session:
+        ch = get_chats("chann", 0)
+        print("-----")
+        print(ch)
+        print("-----")
         #channel_name = request.form['channel_name']
         return jsonify(get_chats(channel_name, 0))
     else:
