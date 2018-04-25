@@ -148,7 +148,7 @@ def get_user_from_username_and_password(username, password):
                 return {'id': row[0], 'username': username}
             else:
                 print("noooo")
-                flash(u'Username or password error', 'error')
+                flash(u'Username or password error!', 'error')
                 conn = connect_db()
                 cur = conn.cursor()
                 return None
@@ -158,7 +158,7 @@ def get_user_from_username_and_password(username, password):
             cur = conn.cursor()
             return None
     else:
-        flash(u'Username or password error', 'error')
+        flash(u'Username or password error!', 'error')
         conn = connect_db()
         cur = conn.cursor()
         return None
@@ -181,7 +181,7 @@ def create_user(username, password):
         else:
             return None
     except sqlite3.IntegrityError:
-        flash(u'Username have already used', 'error')
+        flash(u'Username have already been registered!', 'error')
         conn.commit()
         conn.close()
         print("failed")
@@ -477,8 +477,7 @@ def do_login(user):
         print("User is none")
         if 'uid' in session:
             session.pop('uid')
-        #TO-DO: wrong pwd alert & redirect back to login
-        return redirect('/create_account')
+        return redirect('/login')
 
 #@app.route('/upload_file/<channelname>/<filename>')
 #def upload_file(channelname, filename):
@@ -574,8 +573,10 @@ def create_account():
         password = request.form['password']
         print(username,password)
         user = create_user(username, password)
-        print(user)
-        return do_login(user)
+        if user != None:
+            return do_login(user)
+        else:
+            return redirect('/create_account')
 
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
