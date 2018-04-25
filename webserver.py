@@ -474,7 +474,7 @@ def do_login(user):
         if 'uid' in session:
             session.pop('uid')
         #TO-DO: wrong pwd alert & redirect back to login
-        return redirect('/login')
+        return redirect('/create_account')
 
 #@app.route('/upload_file/<channelname>/<filename>')
 #def upload_file(channelname, filename):

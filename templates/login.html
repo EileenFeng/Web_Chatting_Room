@@ -51,18 +51,16 @@
 	    <span class="focus-input100"></span>
 	  </div>
 	  
-	  {% with messages = get_flashed_messages(with_categories=true) %}
-	  {% if messages %}
-	  <ul class=flashes>
-	    {% for category, message in messages %}
-	    <div class="alert alert-info alert-dismissible" role="alert">
-	      <li class="{{ category }}">{{ message }}</li>
-            </div>
-	    
-	    {% endfor %}
-	  </ul>
-	  {% endif %}
-	  {% endwith %}
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				<ul class=flashes>
+				{% for category, message in messages %}
+					<li class="{{ category }}">{{ message }}</li>
+				{% endfor %}
+				</ul>
+			{% endif %}
+		{% endwith %}
+		    
 	  
 	  <div class="flex-sb-m w-full p-b-30">
 	    <div>
