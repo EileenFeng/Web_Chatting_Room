@@ -296,9 +296,18 @@ class State:
         conn = connect_db()
         cur = conn.cursor()
         conn.text_factory = str
-        cur.execute('INSERT INTO `chats` VALUES(NULL, ?, NULL, ?)', (channel, encrypted_info))
-        conn.commit()
-        conn.close()
+        try:
+            print("insertting")
+            print(channel)
+            print("encrypted info in write into is ")
+            print(encrypted_info)
+            cur.execute('INSERT INTO `chats` VALUES(NULL, ?, NULL, ?)', (channel, encrypted_info))
+            conn.commit()
+            conn.close()
+        except sqlite3.IntegrityError:
+            print("inserting chats failed")
+            conn.commit()
+            conn.close()
         self.channels[channel].current_log = ""
         self.channels[channel].msg_count = 0
 
