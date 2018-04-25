@@ -239,8 +239,10 @@ class State:
                 chan = self.channels[to]
                 if fromuser in chan.members:
                     for user in chan.members:
+                        '''
                         if fromuser == user:
-                            continue
+                            #continue
+                        '''
                         if fromuser in self.users[user].blocklist:
                             self.notify(fromuser, "Blocked from sending messages to %s.\n" % (user))
                         else:
@@ -416,13 +418,49 @@ class State:
             channel = self.channels[channel_name]
             if user == channel.admin:
                 if banned_user in self.users:
+                    conn = connect_db()
+                    cur = conn.cursor()
                     if banned_user in channel.banlist:
                         self.notify(user, "Error: User already banned!\n")
                     else:
                         channel.banlist.append(banned_user)
+                        try:
+                            #update banned in channels
+                            cur.execute('SELECT banned FROM `channels` WHERE channelname = ?', (channel_name,))
+                            row = cur.fetchone()
+                            banlist = ""
+                            if row[0] is None:
+                               banlist = banned_user
+                            else:
+                                banlist = row[0] + ';' + banned_user
+                            cur.execute('UPDATE `channels` SET banned = ? WHERE channel_name=?', (banlist, channel_name))
+                            #update banned in user
+                            cur.execute('SELECT banned FROM `user` WHERE username = ?', (banned_user,))
+                            row2 = cur.fetchone()
+                            bannedlist = ""
+                            if row2[0] is None:
+                               bannedlist = channel_name
+                            else:
+                                bannedlist = row2[0] + channel_name
+                            cur.execute('UPDATE `user` SET banned = ? WHERE username=?', (bannedlist, banned_user))
+                            self.notify(user, "Successfully blocked user!\n")
+                        except sqlite3.IntegrityError:
+                            self.notify(user, "Blocking target failed\n")
                     if banned_user in channel.members:
                         channel.members.remove(banned_user)
-                    self.notify(user, "Successfully banned user from channel!\n")
+                        cur.execute('SELECT members FROM `channels` WHERE channelname = ?', (channel_name,))
+                        mem = cur.fetchone()
+                        members = ""
+                        if mem[0] is not None:
+                            mem_list = members.split(';')
+                            for m in mem_list:
+                                if m != banned_user:
+                                    members = members + m + ';'
+                        print("new member list of channel %s is" % channel_name)
+                        print(members)
+                        cur.execute('UPDATE `channels` SET members = ? WHERE channel_name=?', (members, channel_name))
+                    conn.commit()
+                    conn.close()
                 else:
                     self.notify(user, "Error: User does not exist!\n")
             else:
@@ -437,6 +475,19 @@ class State:
                 if banned_user in self.users:
                     if banned_user in channel.banlist:
                         channel.banlist.remove(banned_user)
+                        conn = connect_db()
+                        cur = conn.cursor()
+                        cur.execute('SELECT banned FROM `channels` WHERE channelname = ?', (channel_name,))
+                        ban = cur.fetchone()
+                        newban = ""
+                        if ban[0] is not None:
+                            ban_list = ban.split(';')
+                            for b in ban_list:
+                                if b != banned_user:
+                                    newban = newban + b + ';'
+                        print("new ban list of channel %s is" % channel_name)
+                        print(newban)
+                        cur.execute('UPDATE `channels` SET banned = ? WHERE channel_name=?', (newban, channel_name))
                         self.notify(user, "Successfully unbanned user from channel!\n")
                     else:
                         self.notify(user, "Error: User is not in banned list!\n")
@@ -454,7 +505,23 @@ class State:
                 self.notify(user, "Error: User already blocked!\n")
             else:
                 u.blocklist.append(blocked_user)
-                self.notify(user, "Successfully blocked user!\n")
+                print(u.blocklist)
+                conn = connect_db()
+                cur = conn.cursor()
+                try:
+                    cur.execute('SELECT blocked FROM `user` WHERE username = ?', (user,))
+                    row = cur.fetchone()
+                    blockedlist = ""
+                    if row[0] is None:
+                        blockedlist = blocked_user
+                    else:
+                        blockedlist = row[0] + ';' + blocked_user
+                    cur.execute('UPDATE `user` SET blocked = ? WHERE username=?', (blockedlist, user))
+                    conn.commit()
+                    conn.close()
+                    self.notify(user, "Successfully blocked user!\n")
+                except sqlite3.IntegrityError:
+                    self.notify(user, "Blocking target failed\n")
         else:
             self.notify(user, "Error: Target user does not exist!\n")
 
