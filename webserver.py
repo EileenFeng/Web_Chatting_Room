@@ -19,10 +19,13 @@ import sys
 import string
 import ssl
 import requests
+import struct
+import random
 import json
 import base64
 import keyconfig
 import cryptography
+from Crypto.Cipher import AES
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
@@ -33,6 +36,7 @@ from flask import redirect
 from flask import jsonify
 from flask import request
 from flask import session
+from flask import flash
 from flask import render_template
 from flask import send_from_directory
 from jinja2 import Template
@@ -54,6 +58,7 @@ def create_tables():
     conn = connect_db()
     cur = conn.cursor()
     #banned: channels that banned this user
+    #blocked: users that this user blocked
     # status 0 stands for not logged in, 1 stands for logged in
     cur.execute('''
             CREATE TABLE IF NOT EXISTS user(
@@ -86,6 +91,13 @@ def create_tables():
         user_id INTEGER,
         content BLOB,
         FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+        )''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS files(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename VARCHAR(32),
+        username INTEGER,
+        channelname VARCHAR(32)
         )''')
     conn.commit()
     conn.close()
@@ -136,6 +148,7 @@ def get_user_from_username_and_password(username, password):
                 return {'id': row[0], 'username': username}
             else:
                 print("noooo")
+                flash(u'Username or password error', 'error')
                 conn = connect_db()
                 cur = conn.cursor()
                 return None
@@ -145,6 +158,9 @@ def get_user_from_username_and_password(username, password):
             cur = conn.cursor()
             return None
     else:
+        flash(u'Username or password error', 'error')
+        conn = connect_db()
+        cur = conn.cursor()
         return None
 
 def create_user(username, password):
@@ -158,13 +174,14 @@ def create_user(username, password):
         cur.execute('SELECT id FROM `user` WHERE username= ?', (username,))
         row = cur.fetchone()
         conn.commit()
-        conn.close()
+        conn.close()    
         if row is not None:
             print("here")
             return {'id': row[0], 'username': username} 
         else:
             return None
     except sqlite3.IntegrityError:
+        flash(u'Username have already used', 'error')
         conn.commit()
         conn.close()
         print("failed")
@@ -195,66 +212,120 @@ def create_chat(uid, content):
     conn.close()
     return row
 
+
+def check_not_block(chat_list, msgblock):
+    uid = session['uid']
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute('SELECT username FROM `user` WHERE id=? ', (uid,))
+    row = cur.fetchone()
+    username = row[0]
+    print("username is %s" % username)
+    msgs = msgblock.split('\n', 19)
+    print("messages")
+    print(msgs)
+    for msg in msgs:
+        print("single msg")
+        print(msg)
+        split = msg.split('>', 1)
+        print("split")
+        print(split)
+        if len(split) == 2:
+            sentuser = split[0]
+            chat = split[1]
+            print("sent by %s" % sentuser)
+            print("msg is %s" % chat)
+            cur.execute('SELECT blocked FROM `user` WHERE username = ?', (username,))
+            row2 = cur.fetchone()
+            print("row2")
+            print(row2[0])
+            if row2[0] is None:
+                chat_list.append(msg)
+                continue
+            blocked_list = row2[0].split(';')
+            print("blocked list of %s is" % sentuser)
+            if sentuser in blocked_list:
+                continue
+            else:
+                chat_list.append(msg)
+    return chat_list
+
+
 def get_chats(channel_name, n):
     conn = connect_db()
     conn.text_factory = str
     cur = conn.cursor()
-    print("1getcha")
+    channel_name = '#' + channel_name
+    print("getcha")
     print(channel_name)
-    cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
-    print("wata")
-    rows = cur.fetchall()
-    conn.commit()
-    conn.close()
-    print("2getcha")
-    print(rows)
-    #did not write salt!!!
-    if len(rows) != 0:
-        print(rows[0][0])
-        splits = rows[0][0].split('\n', 2)
-        print(splits)
-        salt = str.strip(splits[0])
-        msg_encrypted = splits[1]
-        signature = splits[2]
-        print(msg_encrypted)
-        print("3")
-        msg_decrypted = ''
-        try:
-            kdf = PBKDF2HMAC(
-                            algorithm=hashes.SHA256(),
-                            length=32,
-                            salt=salt,
-                            iterations=100000,
-                            backend=default_backend()
-                            )
-            key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
-            fernet = Fernet(key)
-            msg_decrypted = fernet.decrypt(msg_encrypted)
-            print(msg_decrypted)
-            #signature = str.strip(file.readline())
-            h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-            try:
-                h.update(msg_decrypted)
-                h.verify((signature))
-                print("Message authenticity confirmed! Message log is as follows: ")
-                print(msg_decrypted)
-            except cryptography.exceptions.InvalidSignature:
-                print("Invalid signature!")
-        except cryptography.fernet.InvalidToken:
-            print("Not permitted to read channel logs")
-
+    try: 
+        cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
+        #cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name,))
+        print("wata")
+        rows = cur.fetchall()
+        print("2getcha %d" % len(rows))
+        print(rows)
+        conn.commit()
+        conn.close()
+        result_list = list()
+        #did not write salt!!!
+        if len(rows) != 0:
+            for r in rows:
+                print("lenth of cur is %d" % len(r))
+                print(r[0])
+                splits = r[0].split('\n', 2)
+                print("after split")
+                print(splits)
+                salt = str.strip(splits[0])
+                msg_encrypted = splits[1]
+                signature = splits[2]
+                print("encrypted")
+                print(msg_encrypted)
+                print("3")
+                msg_decrypted = ''
+                try:
+                    kdf = PBKDF2HMAC(
+                                    algorithm=hashes.SHA256(),
+                                    length=32,
+                                    salt=salt,
+                                    iterations=100000,
+                                    backend=default_backend()
+                                    )
+                    key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
+                    fernet = Fernet(key)
+                    msg_decrypted = fernet.decrypt(msg_encrypted)
+                    h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+                    try:
+                        h.update(msg_decrypted)
+                        h.verify((signature))
+                        print("Message authenticity confirmed! Message log is as follows: ")
+                        print(msg_decrypted)
+                        #result_list.append(msg_decrypted)
+                        check_not_block(result_list, msg_decrypted)
+                    except cryptography.exceptions.InvalidSignature:
+                        print("Invalid signature!")
+                except cryptography.fernet.InvalidToken:
+                    print("Not permitted to read channel logs")
+            print("result chats")
+            print(result_list)
+            return result_list
+        else:
+            return list()
+        '''
         return list(map((lambda row: {'id': row[0],
-                        'content': utils.escape(msg_decrypted)}),
+                            'content': utils.escape(msg_decrypted)}),
+                            rows))
+                
+        return list(map((lambda row: {'id': row[0],
+                        'user_id': row[1],
+                        'content': utils.escape(row[2]),
+                        'username': get_user_from_id(row[1])['username']}),
                         rows))
-    else:
+        '''
+    except sqlite3.IntegrityError:
+        conn.commit()
+        conn.close()
         return list()
-    '''
-    return list(map((lambda row: {'id': row[0],
-                       'user_id': row[1],
-                       'content': utils.escape(row[2]),
-                       'username': get_user_from_id(row[1])['username']}),
-                    rows))
-    '''
 
 def get_channels(uid):
     #TO-DO: get channel list from sql similarly to get_chats
@@ -398,7 +469,9 @@ def do_login(user):
     if user is not None:
         print("not null")
         session['uid'] = user['id']
-        #get_chats('#chan1', 0)
+        print("before chats")
+        get_chats('chan', 0)
+        print("after chants")
         return redirect('/')
     else:
         print("User is none")
@@ -407,6 +480,11 @@ def do_login(user):
         #TO-DO: wrong pwd alert & redirect back to login
         return redirect('/create_account')
 
+#@app.route('/upload_file/<channelname>/<filename>')
+#def upload_file(channelname, filename):
+
+
+# needs to adapt to requests form
 @app.route('/download_file/<channelname>/<filename>')
 def download_file(channelname, filename):
     if 'uid' not in session:
@@ -417,10 +495,10 @@ def download_file(channelname, filename):
     print(filename)
     channelname = '#'+channelname
     try:
-        cur.execute('SELECT channelname, filenames FROM `channels` WHERE channelname=?', (channelname,))
+        cur.execute('SELECT channelname, filename FROM `files` WHERE channelname=? AND filename = filename', (channelname, filename))
         row = cur.fetchone()
-        print(row[0])
-        if row[0] is not None:
+        if row is not None:
+            print(row[0])
             print(row[1])
             if row[1] is not None:
                 filepath = channelname + '/'+filename
@@ -498,7 +576,6 @@ def create_account():
         user = create_user(username, password)
         print(user)
         return do_login(user)
-
 
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
