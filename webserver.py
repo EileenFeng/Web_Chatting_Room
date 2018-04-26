@@ -9,6 +9,7 @@
 #     python app.py
 #
 # Largely taken from https://gist.github.com/hackeris/fa2bfd20e6bec08c8d5240efe87d4687
+
 import os
 import sqlite3
 import sys
@@ -78,7 +79,7 @@ def create_tables():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channelname VARCHAR(32),
         members TEXT,
-        admin TEXT,
+        admins TEXT,
         topics TEXT,
         banned TEXT, 
         filenames TEXT,
@@ -331,7 +332,7 @@ def get_channels(uid):
     #TO-DO: get channel list from sql similarly to get_chats
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('SELECT channelname, topics, members, admin FROM `channels` WHERE id>=? ORDER BY id ASC', (0, ))
+    cur.execute('SELECT channelname, topics, members, admins FROM `channels` WHERE id>=? ORDER BY id ASC', (0, ))
     channels = cur.fetchall()
     cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
     row = cur.fetchone()
@@ -518,9 +519,14 @@ def do_login(user):
             session.pop('uid')
         return redirect('/login')
 
-#@app.route('/upload_file/<channelname>/<filename>')
-#def upload_file(channelname, filename):
-
+'''
+@app.route('/upload_file/<channelname>/<filename>')
+def upload_file(channelname, filename):
+    if 'uid' not in session:
+        return "Forbidden", 403
+    usr = session['uid']
+    conn = 
+'''
 
 # needs to adapt to requests form
 @app.route('/download_file/<channelname>/<filename>')
@@ -616,6 +622,44 @@ def create_account():
             return do_login(user)
         else:
             return redirect('/create_account')
+
+@app.route('/add_admin', methods=['POST'])
+def ad_admin():
+    print("in adding admins")
+    channel_name = request.form['channel_name']
+    padmin = request.form['padmin']
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
+    row = cur.fetchone()
+    cur_user = row[0]
+    print("cur username is %s" % cur_user)
+    cur.execute('SELECT admins FROM `channels` WHERE channelname=?',(channel_name,))
+    row2 = cur.fetchone()
+    # admins should never be NULL
+    oldadmin = row2[0]
+    print("oldadmin is %s" % oldadmin)
+    admins = row2[0].split(';')
+    if cur_user in admins:
+        newadmin = oldadmin + ';' + padmin
+        print(newadmin)
+        cur.execute('UPDATE `channels` SET admins=? WHERE channelname=?', (newadmin, channel_name))
+        cur.execute('SELECT channeladmin FROM `user` WHERE username=?', (cur_user,))
+        row = cur.fetchone()
+        oldpachan = row[0].split(';')
+        if channel_name not in oldpachan:
+            newchannel_admin = row[0]+channel_name
+            print(newchannel_admin)
+            cur.execute('UPDATE `user` SET channeladmin=? WHERE username=?', (newchannel_admin, padmin))
+            conn.commit()
+            conn.close()
+            return 1
+        else:
+            return 0
+    else:
+        conn.commit()
+        conn.close()
+        return 0
 
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
