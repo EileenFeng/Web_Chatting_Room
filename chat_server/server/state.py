@@ -329,7 +329,7 @@ class State:
         if channel_name.startswith("#"):
             conn = connect_db()
             cur = conn.cursor()
-            cur.execute('SELECT topics, admin, members, banned FROM `channels` WHERE channelname = ?', (channel_name,))
+            cur.execute('SELECT topics, admins, members, banned FROM `channels` WHERE channelname = ?', (channel_name,))
             row = cur.fetchone()
             print("in joining %s" % channel_name)
             print(row)
@@ -376,6 +376,8 @@ class State:
                 print("chan list before insertion")
                 print(chanlist)
                 cur.execute('UPDATE `user` SET channels=? WHERE username= ?', (chanlist, user))
+                print("heheupdating ahahhahaha")
+                cur.execute('UPDATE `user` SET channeladmin =? WHERE username= ?', (channel_name, user))
                 conn.commit()
                 conn.close()
                 self.channels[channel_name] = new_channel
@@ -425,7 +427,17 @@ class State:
     def ban(self, user, banned_user, channel_name):
         if channel_name in self.channels:
             channel = self.channels[channel_name]
-            if user == channel.admin:
+            conn = connect_db()
+            cur = conn.cursor()
+            cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name))
+            row = cur.fetchone()
+            adminlist = row[0].split(';')
+            conn.commit()
+            conn.close()
+            print("admin list is")
+            print(adminlist)
+            channel.admin = adminlist
+            if user in channel.admin:
                 if banned_user in self.users:
                     conn = connect_db()
                     cur = conn.cursor()
@@ -480,7 +492,17 @@ class State:
     def unban(self, user, banned_user, channel_name):
         if channel_name in self.channels:
             channel = self.channels[channel_name]
-            if user == channel.admin:
+            conn = connect_db()
+            cur = conn.cursor()
+            cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name))
+            row = cur.fetchone()
+            adminlist = row[0].split(';')
+            conn.commit()
+            conn.close()
+            print("admin list is")
+            print(adminlist)
+            channel.admin = adminlist
+            if user in channel.admin:
                 if banned_user in self.users:
                     if banned_user in channel.banlist:
                         channel.banlist.remove(banned_user)
