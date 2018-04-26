@@ -662,6 +662,63 @@ def ad_admin():
         conn.close()
         return 0
 
+@app.route('/ban_user/<channel_name>/<banned_user>')
+def ban_user(channel_name, banned_user):
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
+    row = cur.fetchone()
+    cur_user = row[0]
+    channel_name = '#' + channel_name
+    cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name,))
+    row = cur.fetchone()
+    print(row)
+    adminlist = row[0].split(';')
+    if (cur_user in adminlist) and (banned_user not in adminlist):
+        cur.execute('SELECT banned FROM `channels` WHERE channelname = ?', (channel_name,))
+        row = cur.fetchone()
+        old_banlist = list()
+        if row[0] is not None:
+            old_banlist = row[0].split(';')
+        if banned_user not in old_banlist:
+            banlist = ""
+            if row[0] is None:
+                banlist = banned_user
+            else:
+                banlist = row[0] + ';' + banned_user
+            cur.execute('UPDATE `channels` SET banned = ? WHERE channelname=?', (banlist, channel_name))
+            #update banned in user
+            cur.execute('SELECT banned FROM `user` WHERE username = ?', (banned_user,))
+            row2 = cur.fetchone()
+            bannedlist = ""
+            if row2[0] is None:
+                bannedlist = channel_name
+            else:
+                bannedlist = row2[0] + channel_name
+            cur.execute('UPDATE `user` SET banned = ? WHERE username=?', (bannedlist, banned_user))
+            cur.execute('SELECT members FROM `channels` WHERE channelname = ?', (channel_name,))
+            mem = cur.fetchone()
+            members = ""
+            if mem[0] is not None:
+                mem_list = members.split(';')
+                for m in mem_list:
+                    if m != banned_user and len(m) != 0:
+                        members = members + m + ';'
+            print("new member list of channel %s is" % channel_name)
+            print(members)
+            cur.execute('UPDATE `channels` SET members = ? WHERE channelname=?', (members, channel_name))
+            conn.commit()
+            conn.close()
+            return 'success', 200
+        else:
+            conn.commit()
+            conn.close()
+            return 'fail', 404
+    else:
+        conn.commit()
+        conn.close()
+        return 'fail', 404
+
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
     print('in create channel')
