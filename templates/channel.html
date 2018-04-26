@@ -65,9 +65,11 @@
 									<button id="add_admin_btn">Add Admin</button>
 								</td>
 								<td class="column100 column2" data-column="column2">
-									<button>Upload</button> 
-									<button>Another</button>
-									<button>Third</button>
+									<div align="left"><p> Upload files to channel #{{channel_name}}: </p> </div>
+									<br>
+									<div> <input type="file" id="myFile" multiple size="50" onchange="myFunction()"> <button> Upload </button>
+									</div>
+									<p id="demo"></p>
 								</td>
 							</tr>
 						</tbody>
@@ -87,7 +89,7 @@
 		<div id="ban_modal" class="modal">
 			<div class="container-contact100">
 				<div class="wrap-contact100">
-					<form class="contact100-form validate-form-1" id="form" method="POST" name="ban_user" action="/ban">
+					<form class="contact100-form validate-form-1" id="form" method="POST" name="ban_user" action="/ban_user">
 						<span class="contact100-form-title">
 						Ban User:
 						</span><br>
@@ -98,8 +100,9 @@
 							<span class="focus-input100-2"></span>
 						</div>
 
+						<input id="channel_name" style="display: none;">{{channel_name}}</div>
 						<div class="container-contact100-form-btn">
-							<button class="contact100-form-btn" type="submit" formaction="/ban">
+							<button class="contact100-form-btn" type="submit" formaction="/ban_user">
 								Submit
 							</button>
 							<button class="contact100-form-btn" onClick=closeBanModal() type="button">Close

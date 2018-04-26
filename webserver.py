@@ -821,7 +821,6 @@ def login():
     if request.method == 'GET':
         return render_login_page()
     elif request.method == 'POST':
-        print("IN LOGIN")
         username = request.form['username']
         password = request.form['password']
         user = get_user_from_username_and_password(username, password)
