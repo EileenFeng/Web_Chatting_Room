@@ -662,8 +662,10 @@ def ad_admin():
         conn.close()
         return 0
 
-@app.route('/ban_user/<channel_name>/<banned_user>')
-def ban_user(channel_name, banned_user):
+@app.route('/ban_user')
+def ban_user():
+    channel_name = request.form['channel_name']
+    banned_user = request.form['ban_user']
     conn = connect_db()
     cur = conn.cursor()
     cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
