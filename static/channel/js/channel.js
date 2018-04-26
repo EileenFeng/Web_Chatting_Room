@@ -1,5 +1,6 @@
 (function () {
     console.log("in channel.js");
+    var channel_name = document.getElementById("channel_name").textContent;
     var Message;
     Message = function (arg) {
         this.text = arg.text, this.message_side = arg.message_side;
@@ -46,8 +47,7 @@
         var getChatsFrom = 0;
 
         update = function() {
-            //console.log("Channel: " + {{channel_name}}); 
-            $.getJSON("/chats/" + {{channel_name}},function(chats) {
+            $.getJSON("/chats/" + channel_name, function(chats) {
                 console.log("found ya");
                 if (Array.isArray(chats)) {
                     messages.push(chats);
