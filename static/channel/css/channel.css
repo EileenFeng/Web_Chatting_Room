@@ -7,6 +7,12 @@ body {
   font-family: "Calibri", "Roboto", sans-serif;
 }
 
+p {
+  font-weight: bold;
+  color: #0e2f01;
+  font-size:16px;
+}
+
 .chat_window {
   width: calc(100%  - 20px);
   height: calc(100% - 20px);
