@@ -87,19 +87,19 @@
 		<div id="ban_modal" class="modal">
 			<div class="container-contact100">
 				<div class="wrap-contact100">
-					<form class="contact100-form validate-form" id="form" method="POST" name="ban_user" action="/ban">
+					<form class="contact100-form validate-form-1" id="form" method="POST" name="ban_user" action="/ban">
 						<span class="contact100-form-title">
 						Ban User:
 						</span><br>
 
-						<div class="wrap-input100 validate-input" data-validate="Required">
+						<div class="wrap-input100 validate-input-1" data-validate="Required">
 							<input class="input100" type="text" name="username" placeholder="Username">
 							<span class="focus-input100-1"></span>
 							<span class="focus-input100-2"></span>
 						</div>
 
 						<div class="container-contact100-form-btn">
-							<button class="contact100-form-btn" type="submit">
+							<button class="contact100-form-btn" type="submit" formaction="/ban">
 								Submit
 							</button>
 							<button class="contact100-form-btn" onClick=closeBanModal() type="button">Close
@@ -113,19 +113,19 @@
 		<div id="admin_modal" class="modal">
 			<div class="container-contact100">
 				<div class="wrap-contact100">
-					<form class="contact100-form validate-form" id="form" method="POST" name="add_admin" action="/add_admin">
+					<form class="contact100-form validate-form-2" id="form" method="POST" name="add_admin" action="/add_admin">
 						<span class="contact100-form-title">
 						Add user to admin list:
 						</span><br>
 
-						<div class="wrap-input100 validate-input" data-validate="Required">
+						<div class="wrap-input100 validate-input-2" data-validate="Required">
 							<input class="input100" type="text" name="username" placeholder="Username">
 							<span class="focus-input100-1"></span>
 							<span class="focus-input100-2"></span>
 						</div>
 
 						<div class="container-contact100-form-btn">
-							<button class="contact100-form-btn" type="submit">
+							<button class="contact100-form-btn" type="submit" formaction="/add_admin">
 								Submit
 							</button>
 							<button class="contact100-form-btn" onClick=closeAdminModal() type="button">Close
