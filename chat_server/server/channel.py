@@ -4,7 +4,7 @@ class Channel:
 		self.channel_name = channel_name
 		self.topic = topic
 		self.members = members
-		self.admin = admin
+		self.admin = [admin]
 		self.banlist = banlist
 		self.current_log = ""
 		self.msg_count = 0

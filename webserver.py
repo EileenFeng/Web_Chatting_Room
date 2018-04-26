@@ -623,11 +623,9 @@ def create_account():
         else:
             return redirect('/create_account')
 
-@app.route('/add_admin')
+@app.route('/add_admin', methods=['POST'])
 def ad_admin():
     print("in adding admins")
-    channel_name ='#' + chan
-    padmin = user
     channel_name = request.form['channel_name']
     padmin = request.form['padmin']
     conn = connect_db()
