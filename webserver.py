@@ -78,7 +78,7 @@ def create_tables():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channelname VARCHAR(32),
         members TEXT,
-        admin VARCHAR(32),
+        admin TEXT,
         topics TEXT,
         banned TEXT, 
         filenames TEXT,
@@ -331,6 +331,42 @@ def get_channels(uid):
     #TO-DO: get channel list from sql similarly to get_chats
     conn = connect_db()
     cur = conn.cursor()
+    cur.execute('SELECT channelname, topics, members, admin FROM `channels` WHERE id>=? ORDER BY id ASC', (0, ))
+    channels = cur.fetchall()
+    cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
+    row = cur.fetchone()
+    username = row[0]
+    print("username is %s" % username)
+    print("channels length")
+    print(len(channels))
+    print("channels")
+    print(channels)
+    print("done with channels")
+    return_list = list()
+    for chan in channels:
+        print("cur")
+        print(chan)
+        channel_name = chan[0]
+        print("cur channel name is %s" % channel_name)
+        topics = chan[1]
+        members = chan[2].split(';')
+        admins = chan[3].split(';')
+        print("topics")
+        print(topics)
+        print("members are")
+        print(members)
+        print("admins")
+        print(admins)
+        is_member = 0
+        if username in members:
+            is_member = 1
+        return_list.append((channel_name, topics, is_member, admins))
+    conn.commit()
+    conn.close()
+    print(return_list)
+    return return_list
+
+    '''
     cur.execute('SELECT channels FROM `user` WHERE id = ?', (uid,))
     row = cur.fetchone()
     if row[0] is None:
@@ -355,6 +391,7 @@ def get_channels(uid):
         conn.commit()
         conn.close()
         return chanlist
+    '''
 
 def user_delete_chat_of_id(uid, tid):
     conn = connect_db()
@@ -444,6 +481,8 @@ def chats(channel_name):
 @app.route('/channels', methods=['GET'])
 def channels():
     if 'uid' in session:
+        listchan = get_channels(session['uid'])
+        print(listchan)
         return jsonify(get_channels(session['uid']))
     else:
         return jsonify("Error: not logged in!")
