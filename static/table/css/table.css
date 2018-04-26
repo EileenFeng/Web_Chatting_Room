@@ -98,15 +98,16 @@ button {
 	outline: none !important;
     background-color: #cccccc; /* Green */
     border: none;
-    color: black;
+    color: #0e2f01;
     padding: 15px 32px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 14px;
+    font-size: 15px;
     margin: 4px 2px;
     cursor: pointer;
     border-radius: 12px;
+    font-weight: 700;
 }
 
 button:hover {
