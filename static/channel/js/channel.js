@@ -25,7 +25,6 @@
             return $message_input.val();
         };
         putMessage = function (text) {
-            console.log("PUTMESSAGE");
             var $messages, message;
             if (text.trim() === '') {
                 return;
@@ -38,7 +37,6 @@
                 message_side: message_side
             });
             message.draw();
-            console.log("BERFORE RETURNING");
             return $messages.animate({ scrollTop: $messages.prop('scrollHeight') }, 300);
         };
         // Track all of the chats we've seen -- Don't strictly need
@@ -46,18 +44,17 @@
         var messages = [];
         // Keeps track of the last element we've seen
         var getChatsFrom = 0;
-        
+
         update = function() {
-            console.log("here");
-            putMessage("aaaaaaa");
             //console.log("Channel: " + {{channel_name}}); 
-            $.getJSON("/chats/chann",function(chats) {
-                putMessage("aaaaaaa");
+            $.getJSON("/chats/" + {{channel_name}},function(chats) {
+                console.log("found ya");
                 if (Array.isArray(chats)) {
                     messages.push(chats);
                     if (chats.length > 0) {
                         chats.forEach(function(chat) {
-                            putMessage(chat.content + "\n");
+                            console.log(chat);
+                            putMessage(chat);
                         });
                     }
                 }
@@ -65,7 +62,8 @@
         };
 
         // Update the chats every 200 milliseconds
-        setInterval(update, 200);
+        //setInterval(update, 200);
+        update();
         
         var sendMessage = function (text) {
             $.ajax
