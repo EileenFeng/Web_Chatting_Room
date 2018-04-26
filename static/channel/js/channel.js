@@ -1,5 +1,7 @@
 (function () {
-    console.log("in channel.js");
+    function banUser(user, channel_name, banned_user){
+
+    }
     var channel_name = document.getElementById("channel_name").textContent;
     var Message;
     Message = function (arg) {
@@ -48,12 +50,10 @@
 
         update = function() {
             $.getJSON("/chats/" + channel_name, function(chats) {
-                console.log("found ya");
                 if (Array.isArray(chats)) {
                     messages.push(chats);
                     if (chats.length > 0) {
                         chats.forEach(function(chat) {
-                            console.log(chat);
                             putMessage(chat);
                         });
                     }
@@ -87,5 +87,120 @@
             }
         });
     });
+
+    /*==================================================================
+    [ Validate 1]*/
+    var input1 = $('.validate-input-1 .input100');
+
+    $('.validate-form-1').on('submit',function(){
+        var check = true;
+
+        for(var i=0; i<input1.length; i++) {
+            if(validate(input1[i]) == false){
+                showValidate(input1[i]);
+                check=false;
+            }
+        }
+
+        return check;
+    });
+
+
+    $('.validate-form-1 .input100').each(function(){
+        $(this).focus(function(){
+            hideValidate(this);
+        });
+    });
+
+
+    /*==================================================================
+    [ Validate ]*/
+
+    var input2 = $('.validate-input-2 .input100');
+
+    $('.validate-form-2').on('submit',function(){
+        var check = true;
+
+        for(var i=0; i<input2.length; i++) {
+            if(validate(input2[i]) == false){
+                showValidate(input2[i]);
+                check=false;
+            }
+        }
+
+        return check;
+    });
+
+
+    $('.validate-form-2 .input100').each(function(){
+        $(this).focus(function(){
+            hideValidate(this);
+        });
+    });
+
+    /*================================================================== */
+
+    function validate (input) {
+        if($(input).attr('type') == 'email' || $(input).attr('name') == 'email') {
+            if($(input).val().trim().match(/^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{1,5}|[0-9]{1,3})(\]?)$/) == null) {
+                return false;
+            }
+        }
+        else {
+            if($(input).val().trim() == ''){
+                return false;
+            }
+        }
+    }
+
+    function showValidate(input) {
+        var thisAlert = $(input).parent();
+
+        $(thisAlert).addClass('alert-validate');
+    }
+
+    function hideValidate(input) {
+        var thisAlert = $(input).parent();
+
+        $(thisAlert).removeClass('alert-validate');
+    }
+
 }.call(this));
 
+function closeBanModal(){
+    var banModal = document.getElementById('ban_modal');
+    banModal.style.display = "none";
+};
+
+function closeAdminModal(){
+    var adminModal = document.getElementById('admin_modal');
+    adminModal.style.display = "none";
+};
+
+document.getElementById('ban_modal').style.display = "none";
+document.getElementById('admin_modal').style.display = "none";
+
+var banModal = document.getElementById('ban_modal');
+var adminModal = document.getElementById('admin_modal');
+var span = document.getElementsByClassName("close")[0];
+var banUserBtn = document.getElementById("ban_user_btn");
+var addAdminBtn = document.getElementById("add_admin_btn");
+
+banUserBtn.onclick = function() {
+    banModal.style.display = "block";
+}
+
+addAdminBtn.onclick = function() {
+    adminModal.style.display = "block";
+}
+/*
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+*/

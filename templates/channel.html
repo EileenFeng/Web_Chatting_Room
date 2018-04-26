@@ -47,38 +47,93 @@
 								<td class="column100 column1" data-column="column1">
 									<div class="chat_window">
 										<div class="top_menu">
-											<div class="title">channel: #{{channel_name}} @user: {{user}}</div>
+											<div class="title">channel: #{{channel_name}} @user: {{user}}
+											</div>
 										</div>
-										<ul class="messages"></ul>
-									</td>
-									<td> 
-										
-									</td>
-								</tr>
+										<ul class="messages">
+										</ul>
+									</div>
+								</td>
+								<td> 
 
-								<tr class="row100">
-									<td class="column100 column1" data-column="column1"> 
-									<button>Ban User</button> 
-									<button>Add Admin</button>
-										</td>
-									<td class="column100 column2" data-column="column2">
+								</td>
+							</tr>
+
+							<tr class="row100">
+								<td class="column100 column1" data-column="column1"> 
+									<button id="ban_user_btn">Ban User</button> 
+									<button id="add_admin_btn">Add Admin</button>
+								</td>
+								<td class="column100 column2" data-column="column2">
 									<button>Upload</button> 
 									<button>Another</button>
-									<button>Third</button></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+									<button>Third</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
-				<div id="channel_name" style="display: none;">{{channel_name}}</div>
 			</div>
-			<div class="message_template">
-          <li class="message">
-            <div class="avatar"></div>
-            <div class="text_wrapper"><div class="text">
-                Hi there!!</div></div>
-          </li>
-      </div>
+			<div id="channel_name" style="display: none;">{{channel_name}}</div>
+		</div>
+		<div class="message_template">
+			<li class="message">
+				<div class="avatar"></div>
+				<div class="text_wrapper"><div class="text">
+					Hi there!!</div></div>
+				</li>
+			</div>
+		</div>
+		<div id="ban_modal" class="modal">
+			<div class="container-contact100">
+				<div class="wrap-contact100">
+					<form class="contact100-form validate-form-1" id="form" method="POST" name="ban_user" action="/ban">
+						<span class="contact100-form-title">
+						Ban User:
+						</span><br>
+
+						<div class="wrap-input100 validate-input-1" data-validate="Required">
+							<input class="input100" type="text" name="username" placeholder="Username">
+							<span class="focus-input100-1"></span>
+							<span class="focus-input100-2"></span>
+						</div>
+
+						<div class="container-contact100-form-btn">
+							<button class="contact100-form-btn" type="submit" formaction="/ban">
+								Submit
+							</button>
+							<button class="contact100-form-btn" onClick=closeBanModal() type="button">Close
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div id="admin_modal" class="modal">
+			<div class="container-contact100">
+				<div class="wrap-contact100">
+					<form class="contact100-form validate-form-2" id="form" method="POST" name="add_admin" action="/add_admin">
+						<span class="contact100-form-title">
+						Add user to admin list:
+						</span><br>
+
+						<div class="wrap-input100 validate-input-2" data-validate="Required">
+							<input class="input100" type="text" name="username" placeholder="Username">
+							<span class="focus-input100-1"></span>
+							<span class="focus-input100-2"></span>
+						</div>
+
+						<div class="container-contact100-form-btn">
+							<button class="contact100-form-btn" type="submit" formaction="/add_admin">
+								Submit
+							</button>
+							<button class="contact100-form-btn" onClick=closeAdminModal() type="button">Close
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
 		</div>
 		<!--===============================================================================================-->
 		<script src="../static/table/vendor/jquery/jquery-3.2.1.min.js"></script><!--===============================================================================================-->

@@ -336,7 +336,10 @@ def get_channels(uid):
     channels = cur.fetchall()
     cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
     row = cur.fetchone()
-    username = row[0]
+    try:
+        username = row[0]
+    except TypeError, e:
+        return redirect('/logout')
     print("username is %s" % username)
     print("channels length")
     print(len(channels))
@@ -494,7 +497,7 @@ def channel(channel_name):
         user = get_user_from_id(session['uid'])
         return render_template("channel.html", channel_name = channel_name, user=user['username'])
     else:
-        return redirect('/')
+        return redirect('/login')
 
 def render_home_page(uid):
     user = get_user_from_id(uid)
@@ -509,9 +512,7 @@ def do_login(user):
     if user is not None:
         print("not null")
         session['uid'] = user['id']
-        print("before chats")
-        get_chats('chan', 0)
-        print("after chants")
+        #get_chats('chan', 0)
         return redirect('/')
     else:
         print("User is none")
@@ -805,9 +806,12 @@ def change_topics(channel_name, new_topic):
 def index():
     if 'uid' in session:
         #return render_home_page(session['uid'])
-        print("in uid in session index")
-        print(session['uid'])
-        return render_channel_table(session['uid'], get_channels(session['uid']))
+        try:
+            print("in uid in session index")
+            print(session['uid'])
+            return render_channel_table(session['uid'], get_channels(session['uid']))
+        except Exception, e:
+            return redirect('/login')
     return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])

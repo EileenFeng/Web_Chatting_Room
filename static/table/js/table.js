@@ -1,9 +1,7 @@
-
 (function ($) {
 	"use strict";
 
 	$.getJSON("/channels", function(channels) {
-		console.log("in here?");
 		var tableBody = document.getElementById("table_body");
 		if (Array.isArray(channels)) {
 			console.log("isArray");
@@ -11,6 +9,8 @@
 				channels.forEach(function(channel) {
 					var channel_name = channel[0];
 					var channel_topic = channel[1];
+					var isMember = channel[2];
+					var admins = channel[3];
 					console.log("name: " + channel_name +", topic: " + channel_topic);
 					var row = tableBody.insertRow(tableBody.rows.length-1);
 					row.setAttribute("class", "row100");
@@ -58,76 +58,77 @@
 		$(table1).find(".row100.head ."+column).removeClass('hov-column-head-'+ verTable);
 	});
 
-	    /*==================================================================
-	    [ Validate ]*/
-	    var input = $('.validate-input .input100');
+    /*==================================================================
+    [ Validate ]*/
+    var input = $('.validate-input .input100');
 
-	    $('.validate-form').on('submit',function(){
-	    	var check = true;
+    $('.validate-form').on('submit',function(){
+    	var check = true;
 
-	    	for(var i=0; i<input.length; i++) {
-	    		if(validate(input[i]) == false){
-	    			showValidate(input[i]);
-	    			check=false;
-	    		}
-	    	}
+    	for(var i=0; i<input.length; i++) {
+    		if(validate(input[i]) == false){
+    			showValidate(input[i]);
+    			check=false;
+    		}
+    	}
 
-	    	return check;
-	    });
-
-
-	    $('.validate-form .input100').each(function(){
-	    	$(this).focus(function(){
-	    		hideValidate(this);
-	    	});
-	    });
-
-	    function validate (input) {
-	    	if($(input).attr('type') == 'email' || $(input).attr('name') == 'email') {
-	    		if($(input).val().trim().match(/^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{1,5}|[0-9]{1,3})(\]?)$/) == null) {
-	    			return false;
-	    		}
-	    	}
-	    	else {
-	    		if($(input).val().trim() == ''){
-	    			return false;
-	    		}
-	    	}
-	    }
-
-	    function showValidate(input) {
-	    	var thisAlert = $(input).parent();
-
-	    	$(thisAlert).addClass('alert-validate');
-	    }
-
-	    function hideValidate(input) {
-	    	var thisAlert = $(input).parent();
-
-	    	$(thisAlert).removeClass('alert-validate');
-	    }
+    	return check;
+    });
 
 
-	})(jQuery);
+    $('.validate-form .input100').each(function(){
+    	$(this).focus(function(){
+    		hideValidate(this);
+    	});
+    });
 
-	function closeModal(){
-		var modal = document.getElementById('myModal');
-		modal.style.display = "none";
-	};
+    function validate (input) {
+    	if($(input).attr('type') == 'email' || $(input).attr('name') == 'email') {
+    		if($(input).val().trim().match(/^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{1,5}|[0-9]{1,3})(\]?)$/) == null) {
+    			return false;
+    		}
+    	}
+    	else {
+    		if($(input).val().trim() == ''){
+    			return false;
+    		}
+    	}
+    }
 
-	document.getElementById('myModal').style.display = "none";
+    function showValidate(input) {
+    	var thisAlert = $(input).parent();
+
+    	$(thisAlert).addClass('alert-validate');
+    }
+
+    function hideValidate(input) {
+    	var thisAlert = $(input).parent();
+
+    	$(thisAlert).removeClass('alert-validate');
+    }
+
+
+})(jQuery);
+
+function closeModal(){
 	var modal = document.getElementById('myModal');
-	var span = document.getElementsByClassName("close")[0];
-	var btn = document.getElementById("add_chan_btn");
+	modal.style.display = "none";
+};
 
-	btn.onclick = function() {
-		modal.style.display = "block";
-	}
-	span.onclick = function() {
+document.getElementById('myModal').style.display = "none";
+var modal = document.getElementById('myModal');
+var close = document.getElementsByClassName("close")[0];
+var btn = document.getElementById("add_chan_btn");
+
+btn.onclick = function() {
+	modal.style.display = "block";
+}
+/* close.onclick = function() {
+	modal.style.display = "none";
+}
+*/
+window.onclick = function(event) {
+	if (event.target == modal) {
 		modal.style.display = "none";
 	}
-	window.onclick = function(event) {
-		if (event.target == modal) {
-			modal.style.display = "none";
-		}
-	}
+}
