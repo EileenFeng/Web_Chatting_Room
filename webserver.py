@@ -574,6 +574,7 @@ def upload_file():
                                 cur.execute('UPDATE `channels` SET filenames=? WHERE channelname=?', (chanfiles, channel_name))
                                 conn.commit()
                                 conn.close()
+                                return 'OK', 200
                             except sqlite3.IntegrityError as e:
                                 print(e)
                                 return 'Fail', 404
@@ -616,7 +617,7 @@ def upload_file(channelname, filename):
 '''
 
 # needs to adapt to requests form
-@app.route('/download_file/<channelname>/<filename>')
+@app.route('/download_file/<channelname>/<filename>', methods=['GET'])
 def download_file(channelname, filename):
     if 'uid' not in session:
         return "Not Found", 404

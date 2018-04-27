@@ -307,3 +307,9 @@ p {
   -o-box-shadow: 0 3px 20px 0px rgba(0, 0, 0, 0.1);
   -ms-box-shadow: 0 3px 20px 0px rgba(0, 0, 0, 0.1);
 }
+
+#icons{float:left;
+    width: 100px; 
+    height: 100px;
+    margin:12px;
+   }

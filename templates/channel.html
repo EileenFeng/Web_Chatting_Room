@@ -28,8 +28,6 @@
 	<!--===============================================================================================-->
 </head>
 <body>
-	<a href="/login">Logout</a>
-
 	<div class="limiter">
 		<div class="container-table100">
 			<div class="wrap-table100">
@@ -55,8 +53,18 @@
 										</ul>
 									</div>
 								</td>
-								<td>
 
+								<td class="column100 column2" data-column="column2">
+								<div id="file_list">
+									<div id="icons">
+										<img src="../static/channel/images/ic_insert_drive_file_black_48dp/web/ic_insert_drive_file_black_48dp_1x.png">
+										<img src="../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png">
+										<p> filename </p>
+									</div>
+								</div>
+								
+
+						
 								</td>
 							</tr>
 
@@ -68,10 +76,17 @@
 								</td>
 								<td class="column100 column2" data-column="column2">
 									<div align="left"><p> Upload files to channel #{{channel_name}}: </p> </div>
-									<br>
-									<div> <input type="file" id="myFile" multiple size="50" onchange="myFunction()"> <button> Upload </button>
+
+									<!-- <div> <input type="file" id="myFile" multiple size="50" onchange="myFunction()"> <button> Upload </button>
 									</div>
 									<p id="demo"></p>
+ -->							
+									<form method="POST" enctype=multipart/form-data action="/upload_file">
+								      <input type="file" name="file">
+								      <button type="submit">Upload</button>
+    								</form>
+
+    								<a href="/logout"><button>Log Out</button></a>
 								</td>
 							</tr>
 						</tbody>
