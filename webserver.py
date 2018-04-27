@@ -562,8 +562,10 @@ def channels():
     else:
         return jsonify("Error: not logged in!")
 
-def get_files(channel_name):
+@app.route('/get_list/<channel_name>', methods=['GET'])
+def get_list(channel_name):
     channel_name = '#' + channel_name
+    member_list = get_members(channel_name)
     try:
         conn = connect_db()
         cur = conn.cursor()
@@ -572,7 +574,8 @@ def get_files(channel_name):
         if rows is None:
             conn.commit()
             conn.close()
-            return list()
+            ret = (member_list, list())
+            return jsonify(ret)
         get_req = requests.get("http://localhost:8080/" + channel_name)
         if (get_req.ok):
             print("Got file list from Tiny Web Server!")
@@ -587,24 +590,68 @@ def get_files(channel_name):
             print(file_list)
             conn.commit()
             conn.close()
-            return file_list
+            ret = (member_list, file_list)
+            print("return value is ")
+            print(ret)
+            print("end of return value")
+            return jsonify(ret)
         else:
             print("Error: Failed to get file from Tiny Web Server!")
             conn.commit()
             conn.close()
-            return list()
+            ret = (member_list, list())
+            return jsonify(ret)
     except sqlite3.IntegrityError as e:
         print(e)
-        return list()
+        ret = (member_list, list())
+        return jsonify(ret)
         
 
-#@app.route('/delete_file/<channel_name>/<file_name>')
+@app.route('/delete_file/<channel_name>/<file_name>')
+def delete_file(channel_name, file_name):
+    channel_name = '#' + channel_name
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
+        row = cur.fetchone()
+        cur_user = row[0]
+        cur.execute('SELECT uploader FROM `files` WHERE channel_name=? AND file_name=?', (channel_name, file_name))
+        row2 = cur.fetchone()
+        if row2 is None:
+            conn.commit()
+            conn.close()
+            return 'File not found', 404
+        if row2[0] is not None:
+            if row2[0] == cur_user:
+                filepath = os.path.join(channel_name, file_name)
+                filepath += '.crypt'
+                delete_req = requests.delete("http://localhost:8080/" + filepath)
+                if (delete_req.ok):
+                    print("Deleted file from Tiny Web Server!")
+                    conn.commit()
+                    conn.close()
+                    return 'Success', 404
+                else:
+                    print("Error: Failed to delete file from Tiny Web Server!")
+                    conn.commit()
+                    conn.close()
+                    return 'Failed to delete files', 404
+            else:
+                conn.commit()
+                conn.close()
+                return 'Only uploaders can delete files', 403
+        else:
+            return 'Failed to obtain file uploader info', 404
+    except sqlite3.IntegrityError as e:
+        print(e)
+        return 'Fail', 404
 
 @app.route('/channel/<channel_name>')
 def channel(channel_name):
     if 'uid' in session:
-        chanlist = get_members(channel_name)
-        print("member list for %s is" % channel_name)
+        chanlist = get_list(channel_name)
+        print("lists for %s is" % channel_name)
         print(chanlist)
         user = get_user_from_id(session['uid'])
         
