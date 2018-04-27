@@ -561,12 +561,44 @@ def channels():
         return jsonify(get_channels(session['uid']))
     else:
         return jsonify("Error: not logged in!")
-'''
-@app.route('/get_files/<channel_name>', methods=['GET'])
+
 def get_files(channel_name):
     channel_name = '#' + channel_name
-'''
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute('SELECT id FROM `files` WHERE channelname=?', (channel_name,))   
+        rows = cur.fetchall()
+        if rows is None:
+            conn.commit()
+            conn.close()
+            return list()
+        get_req = requests.get("http://localhost:8080/" + channel_name)
+        if (get_req.ok):
+            print("Got file list from Tiny Web Server!")
+            #send data back to client
+            file_list = list()
+            filechunk = ""
+            for chunk in get_req.iter_content(chunk_size=BUFFER_SIZE):
+                filechunk += chunk
+            print("file chunk is %s" % filechunk)
+            file_list = filechunk.split('\n')
+            print("file list is ")
+            print(file_list)
+            conn.commit()
+            conn.close()
+            return file_list
+        else:
+            print("Error: Failed to get file from Tiny Web Server!")
+            conn.commit()
+            conn.close()
+            return list()
+    except sqlite3.IntegrityError as e:
+        print(e)
+        return list()
+        
 
+#@app.route('/delete_file/<channel_name>/<file_name>')
 
 @app.route('/channel/<channel_name>')
 def channel(channel_name):
@@ -637,7 +669,6 @@ def upload_file():
                     try:
                         post_req = requests.post("http://localhost:8080/" + outpath, files=file_to_post)
                         if (post_req.ok):
-                            os.remove(filepath)
                             try:
                                 conn = connect_db()
                                 cur = conn.cursor()
@@ -655,6 +686,8 @@ def upload_file():
                                 cur.execute('INSERT INTO `files` VALUES(NULL, ?, ?, ?)', (filename, cur_user, channel_name))
                                 conn.commit()
                                 conn.close()
+                                #needs to remove
+                                #os.remove(filepath)
                                 return 'Success', 200
                             except sqlite3.IntegrityError as e:
                                 print(e)
