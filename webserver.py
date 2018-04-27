@@ -99,7 +99,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS files(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename VARCHAR(32),
-        username INTEGER,
+        uploader INTEGER,
         channelname VARCHAR(32)
         )''')
     conn.commit()
@@ -561,6 +561,12 @@ def channels():
         return jsonify(get_channels(session['uid']))
     else:
         return jsonify("Error: not logged in!")
+'''
+@app.route('/get_files/<channel_name>', methods=['GET'])
+def get_files(channel_name):
+    channel_name = '#' + channel_name
+'''
+
 
 @app.route('/channel/<channel_name>')
 def channel(channel_name):
@@ -643,6 +649,10 @@ def upload_file():
                                 else:
                                     chanfiles = chanfiles + ';' + filename
                                 cur.execute('UPDATE `channels` SET filenames=? WHERE channelname=?', (chanfiles, channel_name))
+                                cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
+                                row = cur.fetchone()
+                                cur_user = row[0]
+                                cur.execute('INSERT INTO `files` VALUES(NULL, ?, ?, ?)', (filename, cur_user, channel_name))
                                 conn.commit()
                                 conn.close()
                                 return 'Success', 200
