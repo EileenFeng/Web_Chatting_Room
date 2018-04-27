@@ -190,7 +190,6 @@ def create_user(username, password):
         print("failed")
         return None
 
-
 def get_user_from_id(uid):
     conn = connect_db()
     cur = conn.cursor()
@@ -297,6 +296,7 @@ def get_chats(channel_name, n):
                     key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
                     fernet = Fernet(key)
                     msg_decrypted = fernet.decrypt(msg_encrypted)
+                    print("?")
                     h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
                     try:
                         h.update(msg_decrypted)
@@ -307,7 +307,8 @@ def get_chats(channel_name, n):
                         check_not_block(result_list, msg_decrypted)
                     except cryptography.exceptions.InvalidSignature:
                         print("Invalid signature!")
-                except cryptography.fernet.InvalidToken:
+                except cryptography.fernet.InvalidToken as e:
+                    print(e)
                     print("Not permitted to read channel logs")
             print("result chats")
             print(result_list)
