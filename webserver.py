@@ -683,8 +683,8 @@ def do_login(user):
 
 #referrence: http://flask.pocoo.org/docs/1.0/patterns/fileuploads/ 
 
-UPLOAD_FOLDER = './upload/transits'
-ALLOWED_EXTENSIONS = set(['out', 'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+UPLOAD_FOLDER = './uploads'
+ALLOWED_EXTENSIONS = set(['c', 'out', 'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
@@ -693,11 +693,10 @@ def allowed_file(filename):
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
     print("hahah")
-    if not os.path.exists('./upload/transits/'):
+    if not os.path.exists('./uploads'):
         print("not exists")
-        os.mkdir('./upload')
+        os.mkdir('./uploads')
         print("???")
-        os.mkdir('./upload/transits')
     print("waatatta")
     print(request.method)
     if request.method == 'POST':
@@ -766,16 +765,7 @@ def upload_file():
                                 conn.commit()
                                 conn.close()
                                 print("upload usccess")
-                                return '''                                     
-                                <!doctype html>
-                                <title>Upload new File</title>
-                                <h1>Upload new File</h1>
-                                <form method=post enctype=multipart/form-data>
-                                   <input type=file name=file>
-                                   <input type=submit value=Upload>
-                                </form>
-                                '''
-                                #return 'Success', 200
+                                return 'Success', 200
                             except sqlite3.IntegrityError as e:
                                 print(e)
                                 return 'Fail', 404
@@ -1188,7 +1178,9 @@ def serve_css(path):
 # 'encrypt_file' and 'decrypt_file' function referrence: 
 # https://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto
 def encrypt_file(key, in_filename, chunksize = BUFFER_SIZE):
-    out_filename = in_filename + '.crypt'
+    splits = in_filename.split('/')
+    out_filename = splits[len(splits)-1] + '.crypt'
+    print("outfile name is %s" % out_filename)
     iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
     encryptor = AES.new(key, AES.MODE_CBC, iv)
     filesize = os.path.getsize(in_filename)
