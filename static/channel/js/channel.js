@@ -23,10 +23,12 @@
                     iconDiv.setAttribute("id", "icons");
                     var downloadButton = document.createElement("IMG");
                     downloadButton.setAttribute("src", "../static/channel/images/ic_insert_drive_file_black_48dp/web/ic_insert_drive_file_black_48dp_1x.png");
-                    downloadButton.setAttribute("onclick", "downloadFile(file)");
+                    //downloadButton.setAttribute("onclick", "downloadFile(file)");
+                    downloadButton.onclick = downloadFile(file);
                     var deleteButton = document.createElement("IMG");
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
-                    deleteButton.setAttribute("onclick", "deleteFile(file)");
+                    //deleteButton.setAttribute("onclick", "deleteFile(file)");
+                    deleteButton.onclick = deleteFile(file);
                     var filename = document.createElement("P");
                     filename.innerHTML = file;
                     iconDiv.appendChild(downloadButton);
