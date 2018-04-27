@@ -564,8 +564,9 @@ def channels():
 
 @app.route('/get_list/<channel_name>', methods=['GET'])
 def get_list(channel_name):
-    channel_name = '#' + channel_name
     member_list = get_members(channel_name)
+    channel_name = '#' + channel_name
+    print(member_list)
     try:
         conn = connect_db()
         cur = conn.cursor()
@@ -585,7 +586,7 @@ def get_list(channel_name):
             for chunk in get_req.iter_content(chunk_size=BUFFER_SIZE):
                 filechunk += chunk
             print("file chunk is %s" % filechunk)
-            file_list = filechunk.split('\n')
+            file_list = filechunk.split('\t')
             print("file list is ")
             print(file_list)
             conn.commit()
@@ -682,16 +683,25 @@ def do_login(user):
 
 #referrence: http://flask.pocoo.org/docs/1.0/patterns/fileuploads/ 
 
-UPLOAD_FOLDER = '/upload/transits'
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+UPLOAD_FOLDER = './upload/transits'
+ALLOWED_EXTENSIONS = set(['out', 'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/upload_file', methods=['GET', 'POST'])
+@app.route('/upload_file', methods=['POST'])
 def upload_file():
+    print("hahah")
+    if not os.path.exists('./upload/transits/'):
+        print("not exists")
+        os.mkdir('./upload')
+        print("???")
+        os.mkdir('./upload/transits')
+    print("waatatta")
+    print(request.method)
     if request.method == 'POST':
+        print("1")
         # check if the post request has the file part
         if 'file' not in request.files:
             flash('No file part')
@@ -699,14 +709,29 @@ def upload_file():
         file = request.files['file']
         # if user does not select file, browser also
         # submit an empty part without filename
+        print("filename is %s" % file.filename)
         if file.filename == '':
             flash('No selected file')
             return 'Failed', 404
         if file and allowed_file(file.filename):
+            print("2")
             filename = secure_filename(file.filename)
+            print("3")
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(os.path.join(filepath))
+            print("4 %s" % filepath)
+            print(file)
+            if not os.path.exists(filepath):
+                print("file not exists")
+                try:
+                    with open(filepath, 'w'):
+                        print("yes")
+                except Exception as e:
+                    print(e)
+                print("???? watattaat?")
+            file.save(filepath)
+            print("5")
             channel_name = request.form['channel_name']
+            print("6")
             outpath = ""
             try:
                 outpath = encrypt_file(file_key, filepath)
@@ -714,14 +739,19 @@ def upload_file():
                 try:
                     file_to_post = {'file': open(outpath, 'rb')}
                     try:
+                        print("posting")
                         post_req = requests.post("http://localhost:8080/" + outpath, files=file_to_post)
+                        print("posting for upload")
                         if (post_req.ok):
                             try:
                                 conn = connect_db()
                                 cur = conn.cursor()
+                                print("dbdbdbd")
                                 cur.execute('SELECT filenames FROM `channels` where channelname = ?', (channel_name,))
                                 row = cur.fetchone()
                                 chanfiles = row[0]
+                                print("chanfile ahhahaha")
+                                print(chanfiles)
                                 if chanfiles is None:
                                     chanfiles = filename
                                 else:
@@ -730,10 +760,22 @@ def upload_file():
                                 cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
                                 row = cur.fetchone()
                                 cur_user = row[0]
+                                print("cur user")
+                                print(cur_user)
                                 cur.execute('INSERT INTO `files` VALUES(NULL, ?, ?, ?)', (filename, cur_user, channel_name))
                                 conn.commit()
                                 conn.close()
-                                return 'Success', 200
+                                print("upload usccess")
+                                return '''                                     
+                                <!doctype html>
+                                <title>Upload new File</title>
+                                <h1>Upload new File</h1>
+                                <form method=post enctype=multipart/form-data>
+                                   <input type=file name=file>
+                                   <input type=submit value=Upload>
+                                </form>
+                                '''
+                                #return 'Success', 200
                             except sqlite3.IntegrityError as e:
                                 print(e)
                                 return 'Fail', 404
