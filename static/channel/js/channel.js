@@ -87,7 +87,7 @@
 
         // Update the chats every 200 milliseconds
         update();
-        setInterval(update, 200);
+        //setInterval(update, 200);
         
         var sendMessage = function (text) {
             $.ajax
