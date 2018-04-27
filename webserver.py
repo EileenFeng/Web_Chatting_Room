@@ -40,8 +40,10 @@ from flask import session
 from flask import flash
 from flask import render_template
 from flask import send_from_directory
+from werkzeug.utils import secure_filename
 from jinja2 import Template
 from jinja2 import utils
+
 
 app = Flask(__name__)
 
@@ -520,8 +522,90 @@ def do_login(user):
             session.pop('uid')
         return redirect('/login')
 
+#referrence: http://flask.pocoo.org/docs/1.0/patterns/fileuploads/ 
+
+UPLOAD_FOLDER = '/upload/transits'
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload_file', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return 'Failed', 404
+        file = request.files['file']
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            flash('No selected file')
+            return 'Failed', 404
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(os.path.join(filepath))
+            channel_name = request.form['channel_name']
+            outpath = ""
+            try:
+                outpath = encrypt_file(file_key, filepath)
+                #POST to Tiny Web Server
+                try:
+                    file_to_post = {'file': open(outpath, 'rb')}
+                    try:
+                        post_req = requests.post("http://localhost:8080/" + outpath, files=file_to_post)
+                        if (post_req.ok):
+                            os.remove(filepath)
+                            try:
+                                conn = connect_db()
+                                cur = conn.cursor()
+                                cur.execute('SELECT filenames FROM `channels` where channelname = ?', (channel_name,))
+                                row = cur.fetchone()
+                                chanfiles = row[0]
+                                if chanfiles is None:
+                                    chanfiles = filename
+                                else:
+                                    chanfiles = chanfiles + ';' + filename
+                                cur.execute('UPDATE `channels` SET filenames=? WHERE channelname=?', (chanfiles, channel_name))
+                                conn.commit()
+                                conn.close()
+                            except sqlite3.IntegrityError as e:
+                                print(e)
+                                return 'Fail', 404
+                        else:
+                            print("Error: Failed to post file to Tiny Web Server!")
+                            print(post_req.status_code)
+                            return 'Fail', 404
+                    except Exception as e:
+                        print("Error: post request in 'upload' failed")
+                        print(e)
+                        return 'Fail', 404
+                except Exception as e:
+                    print("Error: opening file %s in 'upload' failed" % outpath)
+                    print(e)
+                    return 'Fail', 404
+                except OSError as e:
+                    print("Socket error: %d." % e.errno)
+                    return 'Fail', 404
+            except Exception as e:
+                print("Error: encrypting file in 'upload' failed")
+                print(e)
+                return 'Fail', 404          
+         
+#return '''
 '''
-@app.route('/upload_file/<channelname>/<filename>')
+<!doctype html>
+<title>Upload new File</title>
+<h1>Upload new File</h1>
+<form method=post enctype=multipart/form-data>
+    <input type=file name=file>
+    <input type=submit value=Upload>
+</form>
+'''
+'''
 def upload_file(channelname, filename):
     if 'uid' not in session:
         return "Forbidden", 403
