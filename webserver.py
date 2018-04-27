@@ -872,7 +872,6 @@ def create_account():
 
 @app.route('/add_admin', methods=['POST'])
 def add_admin():
-    print("in adding admins")
     channel_nohash = request.form['channel_name']
     channel_name =  '#' + channel_nohash
     padmin = request.form['username']
@@ -887,31 +886,23 @@ def add_admin():
         cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
         row = cur.fetchone()
         cur_user = row[0]
-        print("cur username is %s" % cur_user)
         cur.execute('SELECT admins FROM `channels` WHERE channelname=?',(channel_name,))
         row2 = cur.fetchone()
         # admins should never be NULL
         oldadmin = row2[0]
-        print("oldadmin is %s" % oldadmin)
         admins = row2[0].split(';')
         if (cur_user in admins) and (padmin not in admins):
             newadmin = oldadmin + ';' + padmin
-            print(newadmin)
             cur.execute('UPDATE `channels` SET admins=? WHERE channelname=?', (newadmin, channel_name))
             cur.execute('SELECT channeladmin FROM `user` WHERE username=?', (cur_user,))
             row = cur.fetchone()
             oldpachan = row[0].split(';')
-            #if channel_name not in oldpachan:
             newchannel_admin = row[0]+channel_name
-            print(newchannel_admin)
             cur.execute('UPDATE `user` SET channeladmin=? WHERE username=?', (newchannel_admin, padmin))
             conn.commit()
             conn.close()
             flash(u'Successfully added admin!', 'success')
             return redirect('/channel/' + channel_nohash)
-            # else:
-            #     flash(u'User is already an admin!', 'error')
-            #     return redirect('/channel/' + channel_nohash)
         else:
             conn.commit()
             conn.close()
@@ -929,13 +920,19 @@ def add_admin():
 
 @app.route('/ban_user', methods=['POST'])
 def ban_user():
-    print(request.method)
-    print(request.form)
-    channel_name = request.form['channel_name']
+    channel_nohash = request.form['channel_name']
+    channel_name =  channel_nohash
     banned_user = request.form['username']
     conn = connect_db()
     cur = conn.cursor()
+    cur_user = ""
+    adminlist = list()
     try: 
+        cur.execute('SELECT username FROM `user` WHERE username=?', (banned_user, ))
+        row = cur.fetchone()
+        if row == None:
+            flash(u'User does not exist!', 'error')
+            return redirect('/channel/' + channel_nohash)
         cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
         row = cur.fetchone()
         cur_user = row[0]
@@ -979,19 +976,26 @@ def ban_user():
                 cur.execute('UPDATE `channels` SET members = ? WHERE channelname=?', (members, channel_name))
                 conn.commit()
                 conn.close()
-                return 1
+                flash(u'Successfully added admin!', 'success')
+                return redirect('/channel/' + channel_nohash)
             else:
                 conn.commit()
                 conn.close()
-                return 0
+                flash(u'User is already banned from channel!', 'error')
+                return redirect('/channel/' + channel_nohash)
         else:
             conn.commit()
             conn.close()
-            return 0
+            if cur_user not in adminlist:
+                flash(u'Not permitted to ban user!', 'error')
+            else:
+                flash(u'Cannot ban an admin!', 'error')
+            return redirect('/channel/' + channel_nohash)
     except sqlite3.IntegrityError:
         conn.commit()
         conn.close()
-        return 0
+        flash(u'Cannot ban user!', 'error')
+        return redirect('/channel/' + channel_nohash)
 
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
