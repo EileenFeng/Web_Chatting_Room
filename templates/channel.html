@@ -37,7 +37,8 @@
 						<thead>
 							<tr class="row100 head">
 								<th class="column100 column1" data-column="column1">Chat Window #{{channel_name}}</th>
-								<th class="column100 column1" data-column="column2">File Window</th>
+								<th class="column100 column2" data-column="column2">Members</th>
+								<th class="column100 column3" data-column="column3">File Window</th>
 							</tr>
 						</thead>
 
@@ -54,7 +55,11 @@
 									</div>
 								</td>
 
-								<td class="column100 column2" data-column="column2">
+								<td>
+								<div id="member_list"></div>
+								</td>
+
+								<td class="column100 column3" data-column="column2">
 								<div id="file_list">
 									<div id="icons">
 										<img src="../static/channel/images/ic_insert_drive_file_black_48dp/web/ic_insert_drive_file_black_48dp_1x.png">
@@ -70,12 +75,16 @@
 
 							<tr class="row100">
 								<td class="column100 column1" data-column="column1">
-									<button id="ban_user_btn">Ban User</button>
-									<button id="add_admin_btn">Add Admin</button>
-									<button id="change_topic">Change Topic </button>
 									<a href="/"><button>Home</button></a>
 									<a href="/logout"><button>Log Out</button></a>
+									<button id="change_topic">Change Topic </button>
 								</td>
+
+								<td>
+									<button id="ban_user_btn">Ban User</button>
+									<button id="add_admin_btn">Add Admin</button>
+								</td>
+
 								<td class="column100 column2" data-column="column2">
 									<div align="left"><p> Upload files to channel #{{channel_name}}: </p> </div>
 
@@ -85,6 +94,7 @@
  -->							
 									<form method="POST" enctype=multipart/form-data action="/upload_file">
 								      <input type="file" name="file">
+								      <div style="display:none;"><input type="text" name="channel_name" value="#{{channel_name}}"></div>
 								      <button type="submit">Upload</button>
     								</form>
 

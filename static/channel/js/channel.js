@@ -4,8 +4,18 @@
 
     $.getJSON("/get_list/" + channel_name, function(members_and_files) {
         var fileList = document.getElementById("file_list");
+        var memberList = document.getElementsById("member_list");
         var members = members_and_files[0];
         var files = members_and_files[1];
+        if (Array.isArray(members)) {
+            if (members.length > 0) {
+                members.forEach(function(member) {
+                    var member = document.createElement("P");
+                    member.innerHTML = member;
+                    memberList.appendChild(member);
+                });
+            }
+        }
         if (Array.isArray(files)) {
             if (files.length > 0) {
                 files.forEach(function(file) {
