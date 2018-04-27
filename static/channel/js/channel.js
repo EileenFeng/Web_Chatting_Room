@@ -62,8 +62,8 @@
         };
 
         // Update the chats every 200 milliseconds
-        //setInterval(update, 200);
-        update();
+        setInterval(update, 200);
+        //update();
         
         var sendMessage = function (text) {
             $.ajax

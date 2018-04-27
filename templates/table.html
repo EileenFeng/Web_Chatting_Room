@@ -37,14 +37,18 @@
 						<thead>
 							<tr class="row100 head">
 								<th class="column100 column1" data-column="column1">Channel Name</th>
-								<th class="column100 column1" data-column="column2">Channel Topic</th>
+								<th class="column100 column2" data-column="column2">Channel Topic</th>
+								<th class="column100 column3" data-column="column3">Admin List</th>
+								<th class="column100 column4" data-column="column4">Join/ Leave</th>
 							</tr>
 						</thead>
 
 						<tbody id="table_body">
 							<tr class="row100">
-								<td class="column100 column1" data-column="column1"> <button id="add_chan_btn" onclick=addChannel()>Add channel</button> </td>
-								<td class="column100 column2" data-column="column2"> <a href="/logout"><button >Log out</button></a> </td>
+								<td class="column100 column1" data-column="column1"> 
+								<p>User activities: </p>
+								<button id="add_chan_btn" onclick=addChannel()>Add channel</button> 
+								<a href="/logout"><button >Log out</button></a> </td>
 							</tr>
 						</tbody>
 					</table>

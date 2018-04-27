@@ -64,6 +64,7 @@
 								<td class="column100 column1" data-column="column1">
 									<button id="ban_user_btn">Ban User</button>
 									<button id="add_admin_btn">Add Admin</button>
+									<button id="change_topic">Change Topic </button>
 								</td>
 								<td class="column100 column2" data-column="column2">
 									<div align="left"><p> Upload files to channel #{{channel_name}}: </p> </div>
@@ -87,12 +88,14 @@
 				</li>
 			</div>
 		</div>
+
+
 		<div id="ban_modal" class="modal">
 			<div class="container-contact100">
 				<div class="wrap-contact100">
 					<form class="contact100-form validate-form-1" id="form" method="POST" name="ban_user" action="/ban_user">
 						<span class="contact100-form-title">
-						Ban User:
+							Ban User:
 						</span><br>
 
 						<div class="wrap-input100 validate-input-1" data-validate="Required">
@@ -101,7 +104,8 @@
 							<span class="focus-input100-2"></span>
 						</div>
 
-						<input id="channel_name" style="display: none;">{{channel_name}}</div>
+						<div style="display:none;"><input name="channel_name" style="display: none;" value={{channel_name}}></div>
+						
 						<div class="container-contact100-form-btn">
 							<button class="contact100-form-btn" type="submit" formaction="/ban_user">
 								Submit
@@ -119,7 +123,7 @@
 				<div class="wrap-contact100">
 					<form class="contact100-form validate-form-2" id="form" method="POST" name="add_admin" action="/add_admin">
 						<span class="contact100-form-title">
-						Add user to admin list:
+							Add user to admin list:
 						</span><br>
 
 						<div class="wrap-input100 validate-input-2" data-validate="Required">
@@ -128,6 +132,7 @@
 							<span class="focus-input100-2"></span>
 						</div>
 
+						<div style="display:none;"><input name="channel_name" style="display: none;" value={{channel_name}}></div>
 						<div class="container-contact100-form-btn">
 							<button class="contact100-form-btn" type="submit" formaction="/add_admin">
 								Submit
@@ -139,6 +144,7 @@
 				</div>
 			</div>
 		</div>
+
 		<!--===============================================================================================-->
 		<script src="../static/table/vendor/jquery/jquery-3.2.1.min.js"></script><!--===============================================================================================-->
 		<script src="../static/table/vendor/animsition/js/animsition.min.js"></script>

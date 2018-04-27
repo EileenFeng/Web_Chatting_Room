@@ -569,6 +569,7 @@ def channel(channel_name):
         print("member list for %s is" % channel_name)
         print(chanlist)
         user = get_user_from_id(session['uid'])
+        
         return render_template("channel.html", channel_name = channel_name, user=user['username'])
     else:
         return redirect('/login')
@@ -785,7 +786,7 @@ def create_account():
 def ad_admin():
     print("in adding admins")
     channel_name = request.form['channel_name']
-    padmin = request.form['padmin']
+    padmin = request.form['username']
     conn = connect_db()
     cur = conn.cursor()
     try: 
@@ -824,10 +825,12 @@ def ad_admin():
         conn.close()
         return 0
 
-@app.route('/ban_user')
+@app.route('/ban_user', methods=['POST'])
 def ban_user():
+    print(request.method)
+    print(request.form)
     channel_name = request.form['channel_name']
-    banned_user = request.form['ban_user']
+    banned_user = request.form['username']
     conn = connect_db()
     cur = conn.cursor()
     try: 
