@@ -184,17 +184,22 @@ class State:
                 cur.execute('SELECT password FROM `user` WHERE username=?', (username,))
                 row = cur.fetchone()
                 print(row[0])
-                if row[0] is not None:
-                    print(row[0])
-                    if username not in self.users:
-                        self.users[username] = User(username, row[0], list())
-                    #u = self.users[username]
-                    if bcrypt.checkpw(password, row[0].encode()):
-                        # Log in the user
-                        self.loggedin_usernames.append(username)
-                        conn.commit()
-                        conn.close()
-                        return 0
+                if row is not None: 
+                    if row[0] is not None:
+                        print(row[0])
+                        if username not in self.users:
+                            self.users[username] = User(username, row[0], list())
+                        #u = self.users[username]
+                        if bcrypt.checkpw(password, row[0].encode()):
+                            # Log in the user
+                            self.loggedin_usernames.append(username)
+                            conn.commit()
+                            conn.close()
+                            return 0
+                        else:
+                            conn.commit()
+                            conn.close()
+                            return -1
                     else:
                         conn.commit()
                         conn.close()
@@ -207,6 +212,7 @@ class State:
                 conn.commit()
                 conn.close()
                 return -1
+                
             #else:
                 #return -2
         else:
@@ -247,10 +253,13 @@ class State:
                             self.notify(fromuser, "Blocked from sending messages to %s.\n" % (user))
                         else:
                             msg = ChatFromMessage(fromuser,to,message)
-                            self.notify(user, msg.render())
+                            #self.notify(user, msg.render())
                     #write to log
                     msg_log = fromuser + "> " + message + "\n"
+                    print("msg log %s" % msg_log)
+                    print("count is %d" %self.channels[to].msg_count)
                     if (self.channels[to].msg_count >= 2):
+                        print("count is %d" %self.channels[to].msg_count)
                         self.write_log(to)
                     self.channels[to].current_log = self.channels[to].current_log + msg_log
                     self.channels[to].msg_count += 1

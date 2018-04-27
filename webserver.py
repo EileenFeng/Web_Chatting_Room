@@ -40,8 +40,10 @@ from flask import session
 from flask import flash
 from flask import render_template
 from flask import send_from_directory
+from werkzeug.utils import secure_filename
 from jinja2 import Template
 from jinja2 import utils
+
 
 app = Flask(__name__)
 
@@ -188,7 +190,6 @@ def create_user(username, password):
         print("failed")
         return None
 
-
 def get_user_from_id(uid):
     conn = connect_db()
     cur = conn.cursor()
@@ -295,6 +296,7 @@ def get_chats(channel_name, n):
                     key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
                     fernet = Fernet(key)
                     msg_decrypted = fernet.decrypt(msg_encrypted)
+                    print("?")
                     h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
                     try:
                         h.update(msg_decrypted)
@@ -305,7 +307,8 @@ def get_chats(channel_name, n):
                         check_not_block(result_list, msg_decrypted)
                     except cryptography.exceptions.InvalidSignature:
                         print("Invalid signature!")
-                except cryptography.fernet.InvalidToken:
+                except cryptography.fernet.InvalidToken as e:
+                    print(e)
                     print("Not permitted to read channel logs")
             print("result chats")
             print(result_list)
@@ -521,8 +524,90 @@ def do_login(user):
             session.pop('uid')
         return redirect('/login')
 
+#referrence: http://flask.pocoo.org/docs/1.0/patterns/fileuploads/ 
+
+UPLOAD_FOLDER = '/upload/transits'
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload_file', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return 'Failed', 404
+        file = request.files['file']
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            flash('No selected file')
+            return 'Failed', 404
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(os.path.join(filepath))
+            channel_name = request.form['channel_name']
+            outpath = ""
+            try:
+                outpath = encrypt_file(file_key, filepath)
+                #POST to Tiny Web Server
+                try:
+                    file_to_post = {'file': open(outpath, 'rb')}
+                    try:
+                        post_req = requests.post("http://localhost:8080/" + outpath, files=file_to_post)
+                        if (post_req.ok):
+                            os.remove(filepath)
+                            try:
+                                conn = connect_db()
+                                cur = conn.cursor()
+                                cur.execute('SELECT filenames FROM `channels` where channelname = ?', (channel_name,))
+                                row = cur.fetchone()
+                                chanfiles = row[0]
+                                if chanfiles is None:
+                                    chanfiles = filename
+                                else:
+                                    chanfiles = chanfiles + ';' + filename
+                                cur.execute('UPDATE `channels` SET filenames=? WHERE channelname=?', (chanfiles, channel_name))
+                                conn.commit()
+                                conn.close()
+                            except sqlite3.IntegrityError as e:
+                                print(e)
+                                return 'Fail', 404
+                        else:
+                            print("Error: Failed to post file to Tiny Web Server!")
+                            print(post_req.status_code)
+                            return 'Fail', 404
+                    except Exception as e:
+                        print("Error: post request in 'upload' failed")
+                        print(e)
+                        return 'Fail', 404
+                except Exception as e:
+                    print("Error: opening file %s in 'upload' failed" % outpath)
+                    print(e)
+                    return 'Fail', 404
+                except OSError as e:
+                    print("Socket error: %d." % e.errno)
+                    return 'Fail', 404
+            except Exception as e:
+                print("Error: encrypting file in 'upload' failed")
+                print(e)
+                return 'Fail', 404          
+         
+#return '''
 '''
-@app.route('/upload_file/<channelname>/<filename>')
+<!doctype html>
+<title>Upload new File</title>
+<h1>Upload new File</h1>
+<form method=post enctype=multipart/form-data>
+    <input type=file name=file>
+    <input type=submit value=Upload>
+</form>
+'''
+'''
 def upload_file(channelname, filename):
     if 'uid' not in session:
         return "Forbidden", 403
@@ -632,33 +717,38 @@ def ad_admin():
     padmin = request.form['username']
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
-    row = cur.fetchone()
-    cur_user = row[0]
-    print("cur username is %s" % cur_user)
-    cur.execute('SELECT admins FROM `channels` WHERE channelname=?',(channel_name,))
-    row2 = cur.fetchone()
-    # admins should never be NULL
-    oldadmin = row2[0]
-    print("oldadmin is %s" % oldadmin)
-    admins = row2[0].split(';')
-    if cur_user in admins:
-        newadmin = oldadmin + ';' + padmin
-        print(newadmin)
-        cur.execute('UPDATE `channels` SET admins=? WHERE channelname=?', (newadmin, channel_name))
-        cur.execute('SELECT channeladmin FROM `user` WHERE username=?', (cur_user,))
+    try: 
+        cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
         row = cur.fetchone()
-        oldpachan = row[0].split(';')
-        if channel_name not in oldpachan:
-            newchannel_admin = row[0]+channel_name
-            print(newchannel_admin)
-            cur.execute('UPDATE `user` SET channeladmin=? WHERE username=?', (newchannel_admin, padmin))
+        cur_user = row[0]
+        print("cur username is %s" % cur_user)
+        cur.execute('SELECT admins FROM `channels` WHERE channelname=?',(channel_name,))
+        row2 = cur.fetchone()
+        # admins should never be NULL
+        oldadmin = row2[0]
+        print("oldadmin is %s" % oldadmin)
+        admins = row2[0].split(';')
+        if cur_user in admins:
+            newadmin = oldadmin + ';' + padmin
+            print(newadmin)
+            cur.execute('UPDATE `channels` SET admins=? WHERE channelname=?', (newadmin, channel_name))
+            cur.execute('SELECT channeladmin FROM `user` WHERE username=?', (cur_user,))
+            row = cur.fetchone()
+            oldpachan = row[0].split(';')
+            if channel_name not in oldpachan:
+                newchannel_admin = row[0]+channel_name
+                print(newchannel_admin)
+                cur.execute('UPDATE `user` SET channeladmin=? WHERE username=?', (newchannel_admin, padmin))
+                conn.commit()
+                conn.close()
+                return 1
+            else:
+                return 0
+        else:
             conn.commit()
             conn.close()
-            return 1
-        else:
             return 0
-    else:
+    except sqlite3.IntegrityError:
         conn.commit()
         conn.close()
         return 0
@@ -668,63 +758,66 @@ def ban_user():
     print(request.method)
     print(request.form)
     channel_name = request.form['channel_name']
-    print("CHANNEL NAME: " + channel_name)
     banned_user = request.form['username']
-    print("BANNED USER: " + banned_user)
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
-    row = cur.fetchone()
-    cur_user = row[0]
-    channel_name = '#' + channel_name
-    cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name,))
-    row = cur.fetchone()
-    print(row)
-    adminlist = row[0].split(';')
-    if (cur_user in adminlist) and (banned_user not in adminlist):
-        cur.execute('SELECT banned FROM `channels` WHERE channelname = ?', (channel_name,))
+    try: 
+        cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
         row = cur.fetchone()
-        old_banlist = list()
-        if row[0] is not None:
-            old_banlist = row[0].split(';')
-        if banned_user not in old_banlist:
-            banlist = ""
-            if row[0] is None:
-                banlist = banned_user
+        cur_user = row[0]
+        channel_name = '#' + channel_name
+        cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name,))
+        row = cur.fetchone()
+        print(row)
+        adminlist = row[0].split(';')
+        if (cur_user in adminlist) and (banned_user not in adminlist):
+            cur.execute('SELECT banned FROM `channels` WHERE channelname = ?', (channel_name,))
+            row = cur.fetchone()
+            old_banlist = list()
+            if row[0] is not None:
+                old_banlist = row[0].split(';')
+            if banned_user not in old_banlist:
+                banlist = ""
+                if row[0] is None:
+                    banlist = banned_user
+                else:
+                    banlist = row[0] + ';' + banned_user
+                cur.execute('UPDATE `channels` SET banned = ? WHERE channelname=?', (banlist, channel_name))
+                #update banned in user
+                cur.execute('SELECT banned FROM `user` WHERE username = ?', (banned_user,))
+                row2 = cur.fetchone()
+                bannedlist = ""
+                if row2[0] is None:
+                    bannedlist = channel_name
+                else:
+                    bannedlist = row2[0] + channel_name
+                cur.execute('UPDATE `user` SET banned = ? WHERE username=?', (bannedlist, banned_user))
+                cur.execute('SELECT members FROM `channels` WHERE channelname = ?', (channel_name,))
+                mem = cur.fetchone()
+                members = ""
+                if mem[0] is not None:
+                    mem_list = members.split(';')
+                    for m in mem_list:
+                        if m != banned_user and len(m) != 0:
+                            members = members + m + ';'
+                print("new member list of channel %s is" % channel_name)
+                print(members)
+                cur.execute('UPDATE `channels` SET members = ? WHERE channelname=?', (members, channel_name))
+                conn.commit()
+                conn.close()
+                return 1
             else:
-                banlist = row[0] + ';' + banned_user
-            cur.execute('UPDATE `channels` SET banned = ? WHERE channelname=?', (banlist, channel_name))
-            #update banned in user
-            cur.execute('SELECT banned FROM `user` WHERE username = ?', (banned_user,))
-            row2 = cur.fetchone()
-            bannedlist = ""
-            if row2[0] is None:
-                bannedlist = channel_name
-            else:
-                bannedlist = row2[0] + channel_name
-            cur.execute('UPDATE `user` SET banned = ? WHERE username=?', (bannedlist, banned_user))
-            cur.execute('SELECT members FROM `channels` WHERE channelname = ?', (channel_name,))
-            mem = cur.fetchone()
-            members = ""
-            if mem[0] is not None:
-                mem_list = members.split(';')
-                for m in mem_list:
-                    if m != banned_user and len(m) != 0:
-                        members = members + m + ';'
-            print("new member list of channel %s is" % channel_name)
-            print(members)
-            cur.execute('UPDATE `channels` SET members = ? WHERE channelname=?', (members, channel_name))
-            conn.commit()
-            conn.close()
-            return 'success', 200
+                conn.commit()
+                conn.close()
+                return 0
         else:
             conn.commit()
             conn.close()
-            return 'fail', 404
-    else:
+            return 0
+    except sqlite3.IntegrityError:
         conn.commit()
         conn.close()
-        return 'fail', 404
+        return 0
 
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
