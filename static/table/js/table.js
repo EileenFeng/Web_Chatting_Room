@@ -18,20 +18,37 @@
 					var cellOne = row.insertCell(0);
 					cellOne.setAttribute("class", "column100 column1");
 					cellOne.setAttribute("data-column", "column1");
-					var link = document.createElement("A");
-					link.setAttribute("href", "/channel/" + channel_name.substring(1));
-					var button = document.createElement("BUTTON");
-					button.innerHTML = channel_name;
-
-					cellOne.appendChild(link);
-					link.appendChild(button);
+					var linkOne = document.createElement("A");
+					linkOne.setAttribute("href", "/channel/" + channel_name.substring(1));
+					var buttonOne = document.createElement("BUTTON");
+					buttonOne.innerHTML = channel_name;
+					cellOne.appendChild(linkOne);
+					linkOne.appendChild(buttonOne);
 
 					var cellTwo = row.insertCell(1);
-					cellOne.setAttribute("class", "column100 column2");
-					cellOne.setAttribute("data-column", "column2");
+					cellTwo.setAttribute("class", "column100 column2");
+					cellTwo.setAttribute("data-column", "column2");
 					cellTwo.innerHTML = channel_topic;
 
-					console.log(row);
+					var cellFour = row.insertCell(2);
+					cellFour.setAttribute("class", "column100 column4");
+					cellFour.setAttribute("data-column", "column4");
+					cellFour.innerHTML = admins;
+
+					var cellThree = row.insertCell(3);
+					cellThree.setAttribute("class", "column100 column3");
+					cellThree.setAttribute("data-column", "column3");
+					var linkThree = document.createElement("A");
+					var buttonThree = document.createElement("BUTTON");
+					if (isMember == 0){
+						linkThree.setAttribute("href", "/join/" + channel_name.substring(1));
+						buttonThree.innerHTML = "Join channel";
+					} else {
+						linkThree.setAttribute("href", "/leave/" + channel_name.substring(1));
+						buttonThree.innerHTML = "Leave channel";
+					}
+					cellThree.appendChild(linkThree);
+					linkThree.appendChild(buttonThree);
 				});
 			}
 		}
