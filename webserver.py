@@ -166,6 +166,37 @@ def get_user_from_username_and_password(username, password):
         cur = conn.cursor()
         return None
 
+def get_members(channel_name):
+    conn = connect_db()
+    cur = conn.cursor()
+    channel_name = '#' + channel_name
+    print("????? in get members %s", channel_name)
+    try:
+        cur.execute('SELECT members FROM `channels` WHERE channelname=?', (channel_name,))
+        row = cur.fetchone()
+        if row is not None:
+            if row[0] is None:
+                conn.commit()
+                conn.close()
+                return list()
+            else:
+                memberlist = row[0].split(';')
+                print("members for %s" % channel_name)
+                print(memberlist)
+                conn.commit()
+                conn.close()
+                return memberlist
+        else:
+            return list()
+            conn.commit()
+            conn.close()
+    except sqlite3.IntegrityError as e:
+        print(e)
+        return list()
+        conn.commit()
+        conn.close()
+            
+
 def create_user(username, password):
     conn = connect_db()
     cur = conn.cursor()
@@ -416,6 +447,43 @@ def render_create_account():
 def render_change_pwd():
     return render_template('change_pwd.html')
 
+@app.route('/leave/<channel_name>')
+def leave_channel(channel_name):
+    conn = connect_db()
+    cur = conn.cursor()
+    channel_name = '#' + channel_name
+    try:
+        cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
+        row = cur.fetchone()
+        username = row[0]
+        print("username is %s" % username)
+        cur.execute('SELECT members FROM `channels` WHERE channelname=?', (channel_name,))
+        row2 = cur.fetchone()
+        if row2 is not None:
+            print("members in leave is")
+            print(row2[0])
+            if row2[0] is None:
+                return 'Fail', 404
+            else:
+                cur_members = row2[0].split(';')
+                new_members = ""
+                for cm in cur_members:
+                    if cm != username:
+                        new_members += cm
+                        new_members += ';'
+                if new_members ==  ';':
+                    new_members = ''
+                print("new members are %s" % new_members)
+                cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (new_members, channel_name))
+                conn.commit()
+                conn.close()
+                return 'Success', 200
+    except sqlite3.IntegrityError as e:
+        print(e)
+        conn.commit()
+        conn.close()
+        return 'Fail', 404
+
 @app.route('/change_pwd', methods=['GET', 'POST'])
 def change_pwd():
     if request.method == 'GET':
@@ -497,6 +565,9 @@ def channels():
 @app.route('/channel/<channel_name>')
 def channel(channel_name):
     if 'uid' in session:
+        chanlist = get_members(channel_name)
+        print("member list for %s is" % channel_name)
+        print(chanlist)
         user = get_user_from_id(session['uid'])
         return render_template("channel.html", channel_name = channel_name, user=user['username'])
     else:
@@ -573,6 +644,7 @@ def upload_file():
                                 cur.execute('UPDATE `channels` SET filenames=? WHERE channelname=?', (chanfiles, channel_name))
                                 conn.commit()
                                 conn.close()
+                                return 'Success', 200
                             except sqlite3.IntegrityError as e:
                                 print(e)
                                 return 'Fail', 404
