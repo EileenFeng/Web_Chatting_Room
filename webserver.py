@@ -882,6 +882,8 @@ def add_admin():
         row = cur.fetchone()
         if row == None:
             flash(u'User does not exist!', 'error')
+            conn.commit()
+            conn.close()
             return redirect('/channel/' + channel_nohash)
         cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
         row = cur.fetchone()
@@ -932,6 +934,8 @@ def ban_user():
         row = cur.fetchone()
         if row == None:
             flash(u'User does not exist!', 'error')
+            conn.commit()
+            conn.close()
             return redirect('/channel/' + channel_nohash)
         cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
         row = cur.fetchone()
@@ -939,7 +943,6 @@ def ban_user():
         channel_name = '#' + channel_name
         cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name,))
         row = cur.fetchone()
-        print(row)
         adminlist = row[0].split(';')
         if (cur_user in adminlist) and (banned_user not in adminlist):
             cur.execute('SELECT banned FROM `channels` WHERE channelname = ?', (channel_name,))
@@ -971,12 +974,10 @@ def ban_user():
                     for m in mem_list:
                         if m != banned_user and len(m) != 0:
                             members = members + m + ';'
-                print("new member list of channel %s is" % channel_name)
-                print(members)
                 cur.execute('UPDATE `channels` SET members = ? WHERE channelname=?', (members, channel_name))
                 conn.commit()
                 conn.close()
-                flash(u'Successfully added admin!', 'success')
+                flash(u'Successfully banned user!', 'success')
                 return redirect('/channel/' + channel_nohash)
             else:
                 conn.commit()

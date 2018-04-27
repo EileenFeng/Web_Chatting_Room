@@ -73,6 +73,8 @@
 									<button id="ban_user_btn">Ban User</button>
 									<button id="add_admin_btn">Add Admin</button>
 									<button id="change_topic">Change Topic </button>
+									<a href="/"><button>Home</button></a>
+									<a href="/logout"><button>Log Out</button></a>
 								</td>
 								<td class="column100 column2" data-column="column2">
 									<div align="left"><p> Upload files to channel #{{channel_name}}: </p> </div>
@@ -86,7 +88,7 @@
 								      <button type="submit">Upload</button>
     								</form>
 
-    								<a href="/logout"><button>Log Out</button></a>
+    								
 								</td>
 							</tr>
 						</tbody>
@@ -160,17 +162,17 @@
 			</div>
 		</div>
 
-					{% with messages = get_flashed_messages(with_categories=true) %}
-					{% if messages %}
-					<ul class=flashes>
-						{% for category, message in messages %}
-						<script> 
-							alert("{{message}}"); 
-						</script>
-						{% endfor %}
-					</ul>
-					{% endif %}
-					{% endwith %}
+		{% with messages = get_flashed_messages(with_categories=true) %}
+		{% if messages %}
+		<ul class=flashes>
+			{% for category, message in messages %}
+			<script> 
+				alert("{{message}}"); 
+			</script>
+			{% endfor %}
+		</ul>
+		{% endif %}
+		{% endwith %}		
 
 		<!--===============================================================================================-->
 		<script src="../static/table/vendor/jquery/jquery-3.2.1.min.js"></script><!--===============================================================================================-->
