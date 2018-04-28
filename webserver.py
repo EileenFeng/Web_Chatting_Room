@@ -442,8 +442,46 @@ def render_create_account():
 def render_change_pwd():
     return render_template('change_pwd.html')
 
+@app.route('/join/<channel_name>')
+def join_channel(channel_name):
+    channel_name = '#' + channel_name
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        print("--------------channel name in join is %s" % channel_name)
+        cur.execute('SELECT username, channels FROM `user` WHERE id=?', (session['uid'],))
+        row = cur.fetchone()
+        username = row[0]
+        usr_old_channels = row[1]
+        cur.execute('SELECT members FROM `channels` WHERE channelname=?', (channel_name, ))
+        row = cur.fetchone()
+        if row is not None:
+            new_members = ""
+            if row[0] is not None:
+                oldmembers = row[0].split(';')
+                if username not in oldmembers:
+                    new_members = row[0] + ';' + username
+            else:
+                new_members = username
+            print("new member is %s" % new_members)
+            cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (new_members, channel_name))
+            oldchans = usr_old_channels.split(';')
+            if channel_name not in oldchans:
+                new_chans = usr_old_channels + channel_name
+                cur.execute('UPDATE `user` SET channels=? WHERE username=?', (new_chans,username))
+            conn.commit()
+            conn.close()
+            return redirect('/')
+        else:
+            return 'Fail', 404
+    except Exception as e:
+        print(e)
+        return 'Fail', 404
+
+
 @app.route('/leave/<channel_name>')
 def leave_channel(channel_name):
+    print("here")
     conn = connect_db()
     cur = conn.cursor()
     channel_name = '#' + channel_name
