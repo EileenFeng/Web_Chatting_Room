@@ -470,10 +470,14 @@ def join_channel(channel_name):
                 new_members = username
             print("new member is %s" % new_members)
             cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (new_members, channel_name))
-            oldchans = usr_old_channels.split(';')
-            if channel_name not in oldchans:
-                new_chans = usr_old_channels + channel_name
-                cur.execute('UPDATE `user` SET channels=? WHERE username=?', (new_chans,username))
+            new_chans = ''
+            if usr_old_channels is None:
+                new_chans = channel_name
+            else:
+                oldchans = usr_old_channels.split(';')
+                if channel_name not in oldchans:
+                    new_chans = usr_old_channels + channel_name
+            cur.execute('UPDATE `user` SET channels=? WHERE username=?', (new_chans,username))
             conn.commit()
             conn.close()
             return redirect('/')
@@ -969,6 +973,7 @@ def ban_user():
     channel_nohash = request.form['channel_name']
     channel_name =  channel_nohash
     banned_user = request.form['username']
+    print("banned_user is %s" %banned_user)
     conn = connect_db()
     cur = conn.cursor()
     cur_user = ""
@@ -984,6 +989,7 @@ def ban_user():
         cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
         row = cur.fetchone()
         cur_user = row[0]
+        print("cur_user is %s" % cur_user)
         channel_name = '#' + channel_name
         cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name,))
         row = cur.fetchone()
@@ -1000,6 +1006,7 @@ def ban_user():
                     banlist = banned_user
                 else:
                     banlist = row[0] + ';' + banned_user
+                print("new banned for channel is %s" % banlist)
                 cur.execute('UPDATE `channels` SET banned = ? WHERE channelname=?', (banlist, channel_name))
                 #update banned in user
                 cur.execute('SELECT banned FROM `user` WHERE username = ?', (banned_user,))
@@ -1009,15 +1016,23 @@ def ban_user():
                     bannedlist = channel_name
                 else:
                     bannedlist = row2[0] + channel_name
+                print("banned channels for user is %s" % bannedlist)
                 cur.execute('UPDATE `user` SET banned = ? WHERE username=?', (bannedlist, banned_user))
+                print("channel name is %s"%channel_name)
                 cur.execute('SELECT members FROM `channels` WHERE channelname = ?', (channel_name,))
                 mem = cur.fetchone()
                 members = ""
+                print("mem is")
+                print(mem)
                 if mem[0] is not None:
-                    mem_list = members.split(';')
+                    mem_list = mem[0].split(';')
                     for m in mem_list:
+                        print("cur is %s" % m)
                         if m != banned_user and len(m) != 0:
+                            print("here in adding")
                             members = members + m + ';'
+                else:
+                    print("watatatatat")
                 cur.execute('UPDATE `channels` SET members = ? WHERE channelname=?', (members, channel_name))
                 conn.commit()
                 conn.close()
