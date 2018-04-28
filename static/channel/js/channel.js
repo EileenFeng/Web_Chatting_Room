@@ -4,7 +4,7 @@
 
     $.getJSON("/get_list/" + channel_name, function(members_and_files) {
         var fileList = document.getElementById("file_list");
-        var memberList = document.getElementsById("member_list");
+        var memberList = document.getElementById("member_list");
         var members = members_and_files[0];
         var files = members_and_files[1];
         if (Array.isArray(members)) {

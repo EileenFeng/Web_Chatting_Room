@@ -368,18 +368,13 @@ def get_channels(uid):
     cur = conn.cursor()
     cur.execute('SELECT channelname, topics, members, admins FROM `channels` WHERE id>=? ORDER BY id ASC', (0, ))
     channels = cur.fetchall()
-    cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
+    cur.execute('SELECT username, banned FROM `user` WHERE id=?', (session['uid'], ))
     row = cur.fetchone()
     try:
         username = row[0]
+        banned = row[1]
     except TypeError, e:
         return redirect('/logout')
-    print("username is %s" % username)
-    print("channels length")
-    print(len(channels))
-    print("channels")
-    print(channels)
-    print("done with channels")
     return_list = list()
     for chan in channels:
         print("cur")
