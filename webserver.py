@@ -1099,31 +1099,33 @@ def create_channel():
         conn.close()
         return "forbidden2", 403
 
-@app.route('/change_topic/<channel_name>/<new_topic>')
-def change_topics(channel_name, new_topic):
-    print("in change tocpics")
-    print(channel_name)
+@app.route('/change_topic', methods=['POST'])
+def change_topics():
+    channel_nohash = request.form['channel_name']
+    channel_name = '#' + channel_nohash
+    new_topic = request.form['new_topic']
     new_topic = utils.escape(new_topic)
-    print(new_topic)
     conn = connect_db()
     cur = conn.cursor()
     try:
         cur.execute('UPDATE `channels` SET topics=? WHERE channelname=?',(new_topic, channel_name))
         cur.execute('SELECT topics FROM `channels` WHERE channelname=?', (channel_name,))
         row = cur.fetchone()
-        print("after update topic")
         if row[0] == new_topic:
             conn.commit()
             conn.close() 
-            return "success", 200      
+            flash(u'Successfully changed topic!', 'success')
+            return redirect('/channel/' + channel_nohash)    
         else:
             conn.commit()
             conn.close() 
-            return "forbidden", 403     
+            flash(u'Cannot change channel topic!', 'error')
+            return redirect('/channel/' + channel_nohash)      
     except sqlite3.IntegrityError:
         conn.commit()
         conn.close()
-        return "forbidden", 403
+        flash(u'Cannot change channel topic!', 'error')
+        return redirect('/channel/' + channel_nohash)  
 
 @app.route('/')
 def index():
