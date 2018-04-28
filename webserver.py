@@ -294,10 +294,7 @@ def get_chats(channel_name, n):
     try: 
         cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
         #cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name,))
-        print("wata")
         rows = cur.fetchall()
-        print("2getcha %d" % len(rows))
-        print(rows)
         conn.commit()
         conn.close()
         result_list = list()
@@ -369,10 +366,15 @@ def get_channels(uid):
     cur.execute('SELECT channelname, topics, members, admins FROM `channels` WHERE id>=? ORDER BY id ASC', (0, ))
     channels = cur.fetchall()
     cur.execute('SELECT username, banned FROM `user` WHERE id=?', (session['uid'], ))
+    banned_chan = list()
     row = cur.fetchone()
     try:
         username = row[0]
-        banned = row[1]
+        splits = row[1].split('#')
+        for i in range (0, len(splits)):
+            if splits[i] != "":
+                banned_chan.append('#' + splits[i])
+        print(banned_chan)
     except TypeError, e:
         return redirect('/logout')
     return_list = list()
@@ -381,6 +383,8 @@ def get_channels(uid):
         print(chan)
         channel_name = chan[0]
         print("cur channel name is %s" % channel_name)
+        if channel_name in banned_chan:
+            continue
         topics = chan[1]
         members = chan[2].split(';')
         admins = chan[3].split(';')
@@ -509,32 +513,6 @@ def change_pwd():
         conn.commit()
         conn.close()
         return redirect('/login')
-
-# @app.route('/changepassword/<newpassword>')
-# def changepassword(newpassword):
-#     conn = connect_db()
-#     cur = conn.cursor()
-#     cur.execute('UPDATE `user` SET password=\'%s\' WHERE id=\'%d\'' % (newpassword, session['uid']))
-#     conn.commit()
-#     conn.close()
-#     return "success", 200
-
-# @app.route('/getpassword')
-# def getpassword():
-#     print("here123123")
-#     if 'uid' in session:
-#         conn = connect_db()
-#         cur = conn.cursor()
-#         cur.execute('SELECT password FROM `user` WHERE id=\'%d\'' % (session['uid']))
-#         row = cur.fetchone()
-#         conn.commit()
-#         conn.close()
-#         print("----")
-#         print(row)
-#         print("----")
-#         return jsonify({'password': row[0]})
-#     else:
-#         return jsonify("Not logged in")
 
 @app.route('/chats/<channel_name>', methods=['GET'])
 def chats(channel_name):
@@ -1118,7 +1096,8 @@ def index():
             return render_channel_table(session['uid'], get_channels(session['uid']))
         except Exception, e:
             return redirect('/login')
-    return redirect('/login')
+    else:
+        return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
