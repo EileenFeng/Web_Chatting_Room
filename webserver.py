@@ -370,11 +370,12 @@ def get_channels(uid):
     row = cur.fetchone()
     try:
         username = row[0]
-        splits = row[1].split('#')
-        for i in range (0, len(splits)):
-            if splits[i] != "":
-                banned_chan.append('#' + splits[i])
-        print(banned_chan)
+        if row[1] != None:
+            splits = row[1].split('#')
+            for i in range (0, len(splits)):
+                if splits[i] != "":
+                    banned_chan.append('#' + splits[i])
+            print(banned_chan)
     except TypeError, e:
         return redirect('/logout')
     return_list = list()
@@ -1131,6 +1132,7 @@ def index():
         try:
             print("in uid in session index")
             print(session['uid'])
+
             return render_channel_table(session['uid'], get_channels(session['uid']))
         except Exception, e:
             return redirect('/login')
