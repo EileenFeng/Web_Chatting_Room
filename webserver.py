@@ -1105,9 +1105,16 @@ def change_topics():
     channel_name = '#' + channel_nohash
     new_topic = request.form['new_topic']
     new_topic = utils.escape(new_topic)
+    current_user = get_user_from_id(session['uid'])
     conn = connect_db()
     cur = conn.cursor()
     try:
+        cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name,))
+        row = cur.fetchone()
+        adminlist = row[0].split(';')
+        if current_user not in adminlist:
+            flash(u'Not permitted to channel topic!', 'error')
+            return redirect('/channel/' + channel_nohash)    
         cur.execute('UPDATE `channels` SET topics=? WHERE channelname=?',(new_topic, channel_name))
         cur.execute('SELECT topics FROM `channels` WHERE channelname=?', (channel_name,))
         row = cur.fetchone()
