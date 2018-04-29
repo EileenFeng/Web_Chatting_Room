@@ -294,10 +294,7 @@ def get_chats(channel_name, n):
     try: 
         cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name, 0))
         #cur.execute('SELECT content FROM `chats` WHERE channelname = ? AND id>=? ORDER BY id ASC', (channel_name,))
-        print("wata")
         rows = cur.fetchall()
-        print("2getcha %d" % len(rows))
-        print(rows)
         conn.commit()
         conn.close()
         result_list = list()
@@ -369,10 +366,16 @@ def get_channels(uid):
     cur.execute('SELECT channelname, topics, members, admins FROM `channels` WHERE id>=? ORDER BY id ASC', (0, ))
     channels = cur.fetchall()
     cur.execute('SELECT username, banned FROM `user` WHERE id=?', (session['uid'], ))
+    banned_chan = list()
     row = cur.fetchone()
     try:
         username = row[0]
-        banned = row[1]
+        if row[1] != None:
+            splits = row[1].split('#')
+            for i in range (0, len(splits)):
+                if splits[i] != "":
+                    banned_chan.append('#' + splits[i])
+            print(banned_chan)
     except TypeError, e:
         return redirect('/logout')
     return_list = list()
@@ -381,6 +384,8 @@ def get_channels(uid):
         print(chan)
         channel_name = chan[0]
         print("cur channel name is %s" % channel_name)
+        if channel_name in banned_chan:
+            continue
         topics = chan[1]
         members = chan[2].split(';')
         admins = chan[3].split(';')
@@ -465,10 +470,14 @@ def join_channel(channel_name):
                 new_members = username
             print("new member is %s" % new_members)
             cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (new_members, channel_name))
-            oldchans = usr_old_channels.split(';')
-            if channel_name not in oldchans:
-                new_chans = usr_old_channels + channel_name
-                cur.execute('UPDATE `user` SET channels=? WHERE username=?', (new_chans,username))
+            new_chans = ''
+            if usr_old_channels is None:
+                new_chans = channel_name
+            else:
+                oldchans = usr_old_channels.split(';')
+                if channel_name not in oldchans:
+                    new_chans = usr_old_channels + channel_name
+            cur.execute('UPDATE `user` SET channels=? WHERE username=?', (new_chans,username))
             conn.commit()
             conn.close()
             return redirect('/')
@@ -547,32 +556,6 @@ def change_pwd():
         conn.commit()
         conn.close()
         return redirect('/login')
-
-# @app.route('/changepassword/<newpassword>')
-# def changepassword(newpassword):
-#     conn = connect_db()
-#     cur = conn.cursor()
-#     cur.execute('UPDATE `user` SET password=\'%s\' WHERE id=\'%d\'' % (newpassword, session['uid']))
-#     conn.commit()
-#     conn.close()
-#     return "success", 200
-
-# @app.route('/getpassword')
-# def getpassword():
-#     print("here123123")
-#     if 'uid' in session:
-#         conn = connect_db()
-#         cur = conn.cursor()
-#         cur.execute('SELECT password FROM `user` WHERE id=\'%d\'' % (session['uid']))
-#         row = cur.fetchone()
-#         conn.commit()
-#         conn.close()
-#         print("----")
-#         print(row)
-#         print("----")
-#         return jsonify({'password': row[0]})
-#     else:
-#         return jsonify("Not logged in")
 
 @app.route('/chats/<channel_name>', methods=['GET'])
 def chats(channel_name):
@@ -992,6 +975,7 @@ def ban_user():
     channel_nohash = request.form['channel_name']
     channel_name =  channel_nohash
     banned_user = request.form['username']
+    print("banned_user is %s" %banned_user)
     conn = connect_db()
     cur = conn.cursor()
     cur_user = ""
@@ -1007,6 +991,7 @@ def ban_user():
         cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'], ))
         row = cur.fetchone()
         cur_user = row[0]
+        print("cur_user is %s" % cur_user)
         channel_name = '#' + channel_name
         cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name,))
         row = cur.fetchone()
@@ -1023,6 +1008,7 @@ def ban_user():
                     banlist = banned_user
                 else:
                     banlist = row[0] + ';' + banned_user
+                print("new banned for channel is %s" % banlist)
                 cur.execute('UPDATE `channels` SET banned = ? WHERE channelname=?', (banlist, channel_name))
                 #update banned in user
                 cur.execute('SELECT banned FROM `user` WHERE username = ?', (banned_user,))
@@ -1032,15 +1018,23 @@ def ban_user():
                     bannedlist = channel_name
                 else:
                     bannedlist = row2[0] + channel_name
+                print("banned channels for user is %s" % bannedlist)
                 cur.execute('UPDATE `user` SET banned = ? WHERE username=?', (bannedlist, banned_user))
+                print("channel name is %s"%channel_name)
                 cur.execute('SELECT members FROM `channels` WHERE channelname = ?', (channel_name,))
                 mem = cur.fetchone()
                 members = ""
+                print("mem is")
+                print(mem)
                 if mem[0] is not None:
-                    mem_list = members.split(';')
+                    mem_list = mem[0].split(';')
                     for m in mem_list:
+                        print("cur is %s" % m)
                         if m != banned_user and len(m) != 0:
+                            print("here in adding")
                             members = members + m + ';'
+                else:
+                    print("watatatatat")
                 cur.execute('UPDATE `channels` SET members = ? WHERE channelname=?', (members, channel_name))
                 conn.commit()
                 conn.close()
@@ -1122,31 +1116,40 @@ def create_channel():
         conn.close()
         return "forbidden2", 403
 
-@app.route('/change_topic/<channel_name>/<new_topic>')
-def change_topics(channel_name, new_topic):
-    print("in change tocpics")
-    print(channel_name)
+@app.route('/change_topic', methods=['POST'])
+def change_topics():
+    channel_nohash = request.form['channel_name']
+    channel_name = '#' + channel_nohash
+    new_topic = request.form['new_topic']
     new_topic = utils.escape(new_topic)
-    print(new_topic)
+    current_user = get_user_from_id(session['uid'])
     conn = connect_db()
     cur = conn.cursor()
     try:
+        cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name,))
+        row = cur.fetchone()
+        adminlist = row[0].split(';')
+        if current_user not in adminlist:
+            flash(u'Not permitted to channel topic!', 'error')
+            return redirect('/channel/' + channel_nohash)    
         cur.execute('UPDATE `channels` SET topics=? WHERE channelname=?',(new_topic, channel_name))
         cur.execute('SELECT topics FROM `channels` WHERE channelname=?', (channel_name,))
         row = cur.fetchone()
-        print("after update topic")
         if row[0] == new_topic:
             conn.commit()
             conn.close() 
-            return "success", 200      
+            flash(u'Successfully changed topic!', 'success')
+            return redirect('/channel/' + channel_nohash)    
         else:
             conn.commit()
             conn.close() 
-            return "forbidden", 403     
+            flash(u'Cannot change channel topic!', 'error')
+            return redirect('/channel/' + channel_nohash)      
     except sqlite3.IntegrityError:
         conn.commit()
         conn.close()
-        return "forbidden", 403
+        flash(u'Cannot change channel topic!', 'error')
+        return redirect('/channel/' + channel_nohash)  
 
 @app.route('/')
 def index():
@@ -1155,10 +1158,12 @@ def index():
         try:
             print("in uid in session index")
             print(session['uid'])
+
             return render_channel_table(session['uid'], get_channels(session['uid']))
         except Exception, e:
             return redirect('/login')
-    return redirect('/login')
+    else:
+        return redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

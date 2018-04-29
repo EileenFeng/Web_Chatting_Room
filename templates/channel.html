@@ -77,7 +77,7 @@
 								<td class="column100 column1" data-column="column1">
 									<a href="/"><button>Home</button></a>
 									<a href="/logout"><button>Log Out</button></a>
-									<button id="change_topic">Change Topic </button>
+									<button id="change_topic_btn">Change Topic </button>
 								</td>
 
 								<td>
@@ -165,6 +165,33 @@
 								Submit
 							</button>
 							<button class="contact100-form-btn" onClick=closeAdminModal() type="button">Close
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<div id="topic_modal" class="modal">
+			<div class="container-contact100">
+				<div class="wrap-contact100">
+					<form class="contact100-form validate-form-3" id="form" method="POST" name="add_admin" action="/change_topic">
+						<span class="contact100-form-title">
+							Change channel topic:
+						</span><br>
+
+						<div class="wrap-input100 validate-input-3" data-validate="Required">
+							<input class="input100" type="text" name="new_topic" placeholder="New topic">
+							<span class="focus-input100-1"></span>
+							<span class="focus-input100-2"></span>
+						</div>
+
+						<div style="display:none;"><input name="channel_name" style="display: none;" value={{channel_name}}></div>
+						<div class="container-contact100-form-btn">
+							<button class="contact100-form-btn" type="submit" formaction="/change_topic">
+								Submit
+							</button>
+							<button class="contact100-form-btn" onClick=closeTopicModal() type="button">Close
 							</button>
 						</div>
 					</form>

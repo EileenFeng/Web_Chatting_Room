@@ -19,7 +19,7 @@
 					cellOne.setAttribute("class", "column100 column1");
 					cellOne.setAttribute("data-column", "column1");
 					var linkOne = document.createElement("A");
-					linkOne.setAttribute("href", "/channel/" + channel_name.substring(1));
+					//linkOne.setAttribute("href", "/channel/" + channel_name.substring(1));
 					var buttonOne = document.createElement("BUTTON");
 					buttonOne.innerHTML = channel_name;
 					cellOne.appendChild(linkOne);
@@ -43,7 +43,11 @@
 					if (isMember == 0){
 						linkThree.setAttribute("href", "/join/" + channel_name.substring(1));
 						buttonThree.innerHTML = "Join channel";
+						linkOne.onclick = function(){
+							window.alert("Need to join channel before entering channel page!");
+						};
 					} else {
+						linkOne.setAttribute("href", "/channel/" + channel_name.substring(1));
 						linkThree.setAttribute("href", "/leave/" + channel_name.substring(1));
 						buttonThree.innerHTML = "Leave channel";
 					}

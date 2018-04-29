@@ -163,6 +163,26 @@
         });
     });
 
+    /*==================================================================
+    [ Validate 3]*/
+    var input3 = $('.validate-input-3 .input100');
+    $('.validate-form-3').on('submit',function(){
+        var check = true;
+        for(var i=0; i<input3.length; i++) {
+            if(validate(input3[i]) == false){
+                showValidate(input3[i]);
+                check=false;
+            }
+        }
+        return check;
+    });
+    $('.validate-form-3 .input100').each(function(){
+        $(this).focus(function(){
+            hideValidate(this);
+        });
+    });
+
+
     /*================================================================== */
     function validate (input) {
         if($(input).attr('type') == 'email' || $(input).attr('name') == 'email') {
@@ -201,14 +221,22 @@ function closeAdminModal(){
     adminModal.style.display = "none";
 };
 
+function closeTopicModal(){
+    var topicModal = document.getElementById('topic_modal');
+    topicModal.style.display = "none";
+};
+
 document.getElementById('ban_modal').style.display = "none";
 document.getElementById('admin_modal').style.display = "none";
+document.getElementById('topic_modal').style.display = "none";
 
 var banModal = document.getElementById('ban_modal');
 var adminModal = document.getElementById('admin_modal');
+var topicModal = document.getElementById('topic_modal');
 var span = document.getElementsByClassName("close")[0];
 var banUserBtn = document.getElementById("ban_user_btn");
 var addAdminBtn = document.getElementById("add_admin_btn");
+var topicBtn = document.getElementById("change_topic_btn");
 
 banUserBtn.onclick = function() {
     banModal.style.display = "block";
@@ -216,6 +244,10 @@ banUserBtn.onclick = function() {
 
 addAdminBtn.onclick = function() {
     adminModal.style.display = "block";
+};
+
+topicBtn.onclick = function() {
+    topicModal.style.display = "block";
 };
 /*
 span.onclick = function() {
