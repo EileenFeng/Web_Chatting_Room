@@ -25,14 +25,16 @@
                     downloadButtonWrap.setAttribute("href", "http://localhost:5000/download_file/" + channel_name + "/" + file);
                     var downloadButton = document.createElement("IMG");
                     downloadButton.setAttribute("src", "../static/channel/images/ic_insert_drive_file_black_48dp/web/ic_insert_drive_file_black_48dp_1x.png");
+                    var deleteButtonWrap = document.createElement("A");
+                    deleteButtonWrap.setAttribute("href", "http://localhost:5000/delete_file/" + channel_name + "/" + file);
                     var deleteButton = document.createElement("IMG");
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
-                    deleteButton.onclick = deleteFile(file);
                     var filename = document.createElement("P");
                     filename.innerHTML = file;
                     iconDiv.appendChild(downloadButtonWrap);
                     downloadButtonWrap.appendChild(downloadButton);
-                    iconDiv.appendChild(deleteButton);
+                    iconDiv.appendChild(deleteButtonWrap);
+                    deleteButtonWrap.appendChild(deleteButton);
                     iconDiv.appendChild(filename);
                     fileList.appendChild(iconDiv);
                 });
