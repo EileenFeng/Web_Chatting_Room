@@ -845,20 +845,22 @@ def upload_file(channelname, filename):
 def download_file(channelname, filename):
     if 'uid' not in session:
         return "Not Found", 404
-    usr = session['uid']
     conn = connect_db()
     cur = conn.cursor()
+    cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
+    urow = cur.fetchone()
+    usr = urow[0]
     print(filename)
     channelname = '#'+channelname
     try:
-        cur.execute('SELECT channelname, filename FROM `files` WHERE channelname=? AND filename = filename', (channelname, filename))
+        cur.execute('SELECT channelname, filename FROM `files` WHERE channelname=? AND filename = ?', (channelname, filename))
         row = cur.fetchone()
         if row is not None:
             print(row[0])
             print(row[1])
             if row[1] is not None:
                 filepath = channelname + '/'+filename
-                if filepath in row[1]:
+                if filename in row[1]:
                     try:
                         #GET to Tiny Web Server
                         outputfile = filepath
@@ -891,30 +893,30 @@ def download_file(channelname, filename):
                                     print ("Error: sending decrypted file in download failed")
                                     conn.commit()
                                     conn.close()
-                                    return "Not Found", 404             
+                                    return "Not Found1", 404             
                             except IOError as e:
                                 print("Error: read in file from stream in download failed")
                                 print(e)
                                 conn.commit()
                                 conn.close()
-                                return "Not Found", 404
+                                return "Not Found2", 404
                         else:
                             print("Error: Failed to get file from Tiny Web Server!")
                             conn.commit()
                             conn.close()
-                            return "Not Found", 404
+                            return "Not Found3", 404
                     except IOError:
                         print("Error: Open file %s failed." % filepath)
                         conn.commit()
                         conn.close()
-                        return "Not Found", 404
+                        return "Not Found4", 404
         conn.commit()
         conn.close()
-        return "Not Found", 404
+        return "Not Found5", 404
     except sqlite3.IntegrityError:
         conn.commit()
         conn.close()
-        return "Not Found", 404
+        return "Not Found6", 404
 
 @app.route('/test_chat')
 def test_chat():
