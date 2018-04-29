@@ -664,11 +664,13 @@ def get_list(channel_name):
                 data_file_list.append(fr[0])
             print("data file lsit")
             print(data_file_list)
-            conn.commit()
-            conn.close()
             file_list = list()
+            print("prelist")
+            print(pre_filelist)
             for fl in pre_filelist:
                 flparse = fl.split(';')
+                print("flparse 0------------- ")
+                print(flparse)
                 if len(flparse) == 2:
                     print("file1: %s" % flparse[0])
                     print(flparse[1])
@@ -677,7 +679,16 @@ def get_list(channel_name):
                 else:
                     if flparse[0] in data_file_list:
                         file_list.append((flparse[0], ))
-            ret = (member_list, file_list)
+            cur.execute('SELECT admins FROM `channels` WHERE channelname=?', (channel_name, ))
+            row = cur.fetchone()
+            admins = list()
+            if row[0] is not None:
+                admins = row[0].split(';')
+            conn.commit()
+            conn.close()
+            print("admins are")
+            print(admins)
+            ret = (member_list, file_list, admins)
             print("return value is ")
             print(ret)
             print("end of return value")
@@ -686,11 +697,11 @@ def get_list(channel_name):
             print("Error: Failed to get file from Tiny Web Server!")
             conn.commit()
             conn.close()
-            ret = (member_list, list())
+            ret = (member_list, list(), admins)
             return jsonify(ret)
     except sqlite3.IntegrityError as e:
         print(e)
-        ret = (member_list, list())
+        ret = (member_list, list(), admins)
         return jsonify(ret)
         
 
