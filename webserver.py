@@ -642,17 +642,18 @@ def delete_file(channel_name, file_name):
         cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
         row = cur.fetchone()
         cur_user = row[0]
-        cur.execute('SELECT uploader FROM `files` WHERE channel_name=? AND file_name=?', (channel_name, file_name))
+        cur.execute('SELECT uploader FROM `files` WHERE channelname=? AND filename=?', (channel_name, file_name))
         row2 = cur.fetchone()
         if row2 is None:
             conn.commit()
             conn.close()
             return 'File not found', 404
         if row2[0] is not None:
-            if row2[0] == cur_user:
+            if row2[0] == session['uid']:
                 filepath = os.path.join(channel_name, file_name)
                 #filepath += '.crypt'
-                delete_req = requests.delete("http://localhost:8080/" + filepath)
+                print("filepath is %s" %filepath)
+                delete_req = requests.delete("http://localhost:8080/" + file_name)
                 if (delete_req.ok):
                     print("Deleted file from Tiny Web Server!")
                     conn.commit()
@@ -788,7 +789,7 @@ def upload_file():
                                 cur_user = row[0]
                                 print("cur user")
                                 print(cur_user)
-                                cur.execute('INSERT INTO `files` VALUES(NULL, ?, ?, ?)', (filename, cur_user, channel_name))
+                                cur.execute('INSERT INTO `files` VALUES(NULL, ?, ?, ?)', (filename, session['uid'], channel_name))
                                 conn.commit()
                                 conn.close()
                                 print("upload usccess")
