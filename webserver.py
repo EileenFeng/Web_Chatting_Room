@@ -651,7 +651,7 @@ def delete_file(channel_name, file_name):
         if row2[0] is not None:
             if row2[0] == cur_user:
                 filepath = os.path.join(channel_name, file_name)
-                filepath += '.crypt'
+                #filepath += '.crypt'
                 delete_req = requests.delete("http://localhost:8080/" + filepath)
                 if (delete_req.ok):
                     print("Deleted file from Tiny Web Server!")
@@ -858,7 +858,7 @@ def download_file(channelname, filename):
                     try:
                         #GET to Tiny Web Server
                         outputfile = filepath
-                        filepath += ".crypt"
+                        #filepath += ".crypt"
                         dirs = outputfile.split("/")
                         dir_num = 0
                         if outputfile.endswith("/"):
@@ -873,7 +873,8 @@ def download_file(channelname, filename):
                             os.chdir(dirs[count])
                             count += 1
                         os.chdir(cwd)
-                        getfilepath = filename + '.crypt'
+                        #getfilepath = filename + '.crypt'
+                        getfilepath = filename
                         print("file path in download is %s" % getfilepath)
                         get_req = requests.get("http://localhost:8080/" + getfilepath)
                         if (get_req.ok):
@@ -1232,7 +1233,8 @@ def serve_css(path):
 # https://eli.thegreenplace.net/2010/06/25/aes-encryption-of-files-in-python-with-pycrypto
 def encrypt_file(key, in_filename, chunksize = BUFFER_SIZE):
     splits = in_filename.split('/')
-    out_filename = splits[len(splits)-1] + '.crypt'
+    #out_filename = splits[len(splits)-1] + '.crypt'
+    out_filename = splits[len(splits) - 1]
     print("outfile name is %s" % out_filename)
     iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
     encryptor = AES.new(key, AES.MODE_CBC, iv)
@@ -1256,8 +1258,9 @@ def encrypt_file(key, in_filename, chunksize = BUFFER_SIZE):
     return out_filename
                 
 def decrypt_file(key, username, in_filename, chunksize=BUFFER_SIZE):
-    files = in_filename[:len(in_filename) - len(".crypt")].split("/")
-    single_filename = files[len(files)-1]
+    #files = in_filename[:len(in_filename) - len(".crypt")].split("/")
+    files = in_filename.split('/')
+    single_filename = files[len(files) - 1]
     out_filename = username + "/" + single_filename
     dirs = out_filename.split("/")
     dir_num = 0
