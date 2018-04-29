@@ -743,7 +743,7 @@ def upload_file():
             return 'Failed', 404
         file = request.files['file']
         channel_name = request.form['channel_name']
-        channel_nohash = channel_name.substring(1)
+        channel_nohash = channel_name[1:]
         # if user does not select file, browser also
         # submit an empty part without filename
         print("filename is %s" % file.filename)
