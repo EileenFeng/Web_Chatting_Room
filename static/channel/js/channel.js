@@ -10,9 +10,9 @@
         if (Array.isArray(members)) {
             if (members.length > 0) {
                 members.forEach(function(member) {
-                    var member = document.createElement("P");
-                    member.innerHTML = member;
-                    memberList.appendChild(member);
+                    var memberPara = document.createElement("P");
+                    memberPara.innerHTML = member;
+                    memberList.appendChild(memberPara);
                 });
             }
         }
@@ -21,17 +21,18 @@
                 files.forEach(function(file) {
                     var iconDiv = document.createElement("DIV");
                     iconDiv.setAttribute("id", "icons");
+			var downloadButtonWrap = document.createElement("A");
+			downloadButtonWrap.setAttribute("href", "http://localhost:5000/download_file/" + channel_name + "/" + file);
                     var downloadButton = document.createElement("IMG");
                     downloadButton.setAttribute("src", "../static/channel/images/ic_insert_drive_file_black_48dp/web/ic_insert_drive_file_black_48dp_1x.png");
-                    //downloadButton.setAttribute("onclick", "downloadFile(file)");
-                    downloadButton.onclick = downloadFile(file);
-                    var deleteButton = document.createElement("IMG");
+			var deleteButton = document.createElement("IMG");
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
                     //deleteButton.setAttribute("onclick", "deleteFile(file)");
                     deleteButton.onclick = deleteFile(file);
                     var filename = document.createElement("P");
                     filename.innerHTML = file;
-                    iconDiv.appendChild(downloadButton);
+                    iconDiv.appendChild(downloadButtonWrap);
+			downloadButtonWrap.appendChild(downloadButton);
                     iconDiv.appendChild(deleteButton);
                     iconDiv.appendChild(filename);
                     fileList.appendChild(iconDiv);
