@@ -750,10 +750,12 @@ def upload_file():
             outpath = ""
             try:
                 outpath = encrypt_file(file_key, filepath)
+                print("outpath in posting is %s" % outpath)
+                print("hehe %d" % os.path.getsize(outpath))
                 #POST to Tiny Web Server
                 try:
                     file_to_post = {'file': open(outpath, 'rb')}
-                    try:
+                    try: 
                         print("posting")
                         post_req = requests.post("http://localhost:8080/" + outpath, files=file_to_post)
                         print("posting for upload")
@@ -862,7 +864,9 @@ def download_file(channelname, filename):
                             os.chdir(dirs[count])
                             count += 1
                         os.chdir(cwd)
-                        get_req = requests.get("http://localhost:8080/" + filepath)
+                        getfilepath = filename + '.crypt'
+                        print("file path in download is %s" % getfilepath)
+                        get_req = requests.get("http://localhost:8080/" + getfilepath)
                         if (get_req.ok):
                             try:
                                 print("Got file from Tiny Web Server!")
@@ -1228,13 +1232,16 @@ def encrypt_file(key, in_filename, chunksize = BUFFER_SIZE):
         with open(out_filename, 'wb') as outfile:
             outfile.write(struct.pack('<Q', filesize))
             outfile.write(iv)
-            
+            counter = 0
             while True:
                 chunk = infile.read(chunksize)
                 if len(chunk) == 0:
                     break
                 elif len(chunk) % 16 != 0:
                     chunk += ' ' * (16 - len(chunk) % 16)
+                print("chaunk %d" %len(chunk))
+                print(counter)
+                counter += 1
                 outfile.write(encryptor.encrypt(chunk))
                     
     return out_filename
@@ -1265,6 +1272,7 @@ def decrypt_file(key, username, in_filename, chunksize=BUFFER_SIZE):
         with open(out_filename, 'wb') as outfile:
             while True:
                 chunk = infile.read(chunksize)
+                print("in decrypt: %d" % len(chunk))
                 if len(chunk) == 0:
                     break
                 outfile.write(decryptor.decrypt(chunk))
