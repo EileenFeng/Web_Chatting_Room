@@ -696,6 +696,7 @@ def get_list(channel_name):
 
 @app.route('/delete_file/<channel_name>/<file_name>')
 def delete_file(channel_name, file_name):
+    channel_nohash = channel_name
     channel_name = '#' + channel_name
     try:
         conn = connect_db()
@@ -719,21 +720,26 @@ def delete_file(channel_name, file_name):
                     print("Deleted file from Tiny Web Server!")
                     conn.commit()
                     conn.close()
-                    return 'Success', 404
+                    flash(u'Successfully deleted file ' + file_name + '!', 'success')
+                    return redirect('/channel/' + channel_nohash)  
                 else:
                     print("Error: Failed to delete file from Tiny Web Server!")
                     conn.commit()
                     conn.close()
-                    return 'Failed to delete files', 404
+                    flash(u'Failed to delete file ' + file_name + '!', 'error')
+                    return redirect('/channel/' + channel_nohash)  
             else:
                 conn.commit()
                 conn.close()
-                return 'Only uploaders can delete files', 403
+                flash(u'Failed to delete file ' + file_name + '!', 'error')
+                return redirect('/channel/' + channel_nohash)  
         else:
-            return 'Failed to obtain file uploader info', 404
+            flash(u'Failed to obtain file uploader information for' + file_name + '!', 'error')
+            return redirect('/channel/' + channel_nohash)  
     except sqlite3.IntegrityError as e:
         print(e)
-        return 'Fail', 404
+        flash(u'Failed to delete file ' + file_name + '!', 'error')
+        return redirect('/channel/' + channel_nohash)  
 
 @app.route('/channel/<channel_name>')
 def channel(channel_name):
@@ -771,7 +777,7 @@ def do_login(user):
 #referrence: http://flask.pocoo.org/docs/1.0/patterns/fileuploads/ 
 
 UPLOAD_FOLDER = './uploads'
-ALLOWED_EXTENSIONS = set(['c', 'out', 'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+ALLOWED_EXTENSIONS = set(['c', 'out', 'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'py'])
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
@@ -794,6 +800,9 @@ def upload_file():
             return 'Failed', 404
         file = request.files['file']
         channel_name = request.form['channel_name']
+        channel_nohash = channel_name[1:]
+        print("Channel_name: " + channel_name)
+        print("Channel_nohash:  " + channel_nohash)
         # if user does not select file, browser also
         # submit an empty part without filename
         print("filename is %s" % file.filename)
@@ -855,35 +864,35 @@ def upload_file():
                                 conn.commit()
                                 conn.close()
                                 flash(u'Successfully uploaded file ' + filename + '!', 'success')
-                                return redirect('/channel/' + channel_name)  
+                                return redirect('/channel/' + channel_nohash)  
                             except sqlite3.IntegrityError as e:
                                 print(e)
                                 flash(u'Failed to upload file ' + filename + '!', 'error')
-                                return redirect('/channel/' + channel_name)  
+                                return redirect('/channel/' + channel_nohash)  
                         else:
                             print("Error: Failed to post file to Tiny Web Server!")
                             print(post_req.status_code)
                             flash(u'Failed to upload file ' + filename + '!', 'error')
-                            return redirect('/channel/' + channel_name)  
+                            return redirect('/channel/' + channel_nohash)  
                     except Exception as e:
                         print("Error: post request in 'upload' failed")
                         print(e)
                         flash(u'Failed to upload file ' + filename + '!', 'error')
-                        return redirect('/channel/' + channel_name)  
+                        return redirect('/channel/' + channel_nohash)  
                 except Exception as e:
                     print("Error: opening file %s in 'upload' failed" % outpath)
                     print(e)
                     flash(u'Failed to upload file ' + filename + '!', 'error')
-                    return redirect('/channel/' + channel_name)  
+                    return redirect('/channel/' + channel_nohash)  
                 except OSError as e:
                     print("Socket error: %d." % e.errno)
                     flash(u'Failed to upload file ' + filename + '!', 'error')
-                    return redirect('/channel/' + channel_name)  
+                    return redirect('/channel/' + channel_nohash)  
             except Exception as e:
                 print("Error: encrypting file in 'upload' failed")
                 print(e)
                 flash(u'Failed to upload file ' + filename + '!', 'error')
-                return redirect('/channel/' + channel_name)  
+                return redirect('/channel/' + channel_nohash)  
          
 #return '''
 '''

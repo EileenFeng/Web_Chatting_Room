@@ -18,22 +18,29 @@
         }
         if (Array.isArray(files)) {
             if (files.length > 0) {
-                files.forEach(function(file) {
+                files.forEach(function(fileTuple) {
+                    var file = fileTuple[0];
+                    var size = fileTuple[1];
                     var iconDiv = document.createElement("DIV");
                     iconDiv.setAttribute("id", "icons");
                     var downloadButtonWrap = document.createElement("A");
                     downloadButtonWrap.setAttribute("href", "http://localhost:5000/download_file/" + channel_name + "/" + file);
                     var downloadButton = document.createElement("IMG");
                     downloadButton.setAttribute("src", "../static/channel/images/ic_insert_drive_file_black_48dp/web/ic_insert_drive_file_black_48dp_1x.png");
+                    var deleteButtonWrap = document.createElement("A");
+                    deleteButtonWrap.setAttribute("href", "http://localhost:5000/delete_file/" + channel_name + "/" + file);
                     var deleteButton = document.createElement("IMG");
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
-                    deleteButton.onclick = deleteFile(file);
                     var filename = document.createElement("P");
                     filename.innerHTML = file;
+                    var filesize = document.createElement("P");
+                    filesize.innerHTML = size;
                     iconDiv.appendChild(downloadButtonWrap);
                     downloadButtonWrap.appendChild(downloadButton);
-                    iconDiv.appendChild(deleteButton);
+                    iconDiv.appendChild(deleteButtonWrap);
+                    deleteButtonWrap.appendChild(deleteButton);
                     iconDiv.appendChild(filename);
+                    iconDiv.appendChild(filesize);
                     fileList.appendChild(iconDiv);
                 });
             }
