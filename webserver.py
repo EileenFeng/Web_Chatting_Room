@@ -834,7 +834,7 @@ def download_file(channelname, filename):
     print(filename)
     channelname = '#'+channelname
     try:
-        cur.execute('SELECT channelname, filename FROM `files` WHERE channelname=? AND filename = filename', (channelname, filename))
+        cur.execute('SELECT channelname, filename FROM `files` WHERE channelname=? AND filename = ?', (channelname, filename))
         row = cur.fetchone()
         if row is not None:
             print(row[0])
