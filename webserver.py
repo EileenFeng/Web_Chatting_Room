@@ -283,7 +283,56 @@ def check_not_block(chat_list, msgblock):
                 chat_list.append(msg)
     return chat_list
 
+@app.route('/get_blocklist', methods=['GET'])
+def get_block_list():
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute('SELECT blocked FROM `user` WHERE id=?', (session['uid'], ))
+        row = cur.fetchone()
+        if row[0] is not None:
+            block_list = row[0].split(';')
+            print("block list")
+            print(block_list)
+            conn.commit()
+            conn.close()
+            return jsonify(block_list)
+        else:
+            conn.commit()
+            conn.close()
+            return jsonify(list())
+    except Exception as e:
+        print(e)
+        conn.commit()
+        conn.close()
+        return jsonify(list())
 
+@app.route('/block_user/<username>', methods=['POST', 'GET'])
+def block_user(username):
+    #block_target = request.form['username']
+    block_target = username
+    print("blocktarget is " + block_target)
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute('SELECT blocked FROM `user` WHERE id=?', (session['uid'], ))
+        row = cur.fetchone()
+        new_blocked = ""
+        if row[0] is None:
+            new_blocked = block_target
+        else:
+            old_blocklist = row[0].split(';')
+            if block_target not in old_blocklist:
+                newblocked = row[0] + ';' + block_target
+                print("new block list is " + new_blocked)
+                cur.execute('UPDATE `user` SET blocked=? WHERE id=?', (new_blocked, session['uid']))
+                conn.commit()
+                conn.close()
+            return "Success", 200
+    except Exception as e:
+        print(e)
+        return "Fail", 404
+    
 def get_chats(channel_name, n):
     conn = connect_db()
     conn.text_factory = str
@@ -389,6 +438,8 @@ def get_channels(uid):
         topics = chan[1]
         members = chan[2].split(';')
         admins = chan[3].split(';')
+        for i in range (0, len(admins)):
+            admins[i] = ' ' + admins[i]
         print("topics")
         print(topics)
         print("members are")
