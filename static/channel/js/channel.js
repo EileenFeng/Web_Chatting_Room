@@ -18,7 +18,9 @@
         }
         if (Array.isArray(files)) {
             if (files.length > 0) {
-                files.forEach(function(file) {
+                files.forEach(function(fileTuple) {
+                    var file = fileTuple[0];
+                    var size = fileTuple[1];
                     var iconDiv = document.createElement("DIV");
                     iconDiv.setAttribute("id", "icons");
                     var downloadButtonWrap = document.createElement("A");
@@ -31,11 +33,14 @@
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
                     var filename = document.createElement("P");
                     filename.innerHTML = file;
+                    var filesize = document.createElement("P");
+                    filesize.innerHTML = size;
                     iconDiv.appendChild(downloadButtonWrap);
                     downloadButtonWrap.appendChild(downloadButton);
                     iconDiv.appendChild(deleteButtonWrap);
                     deleteButtonWrap.appendChild(deleteButton);
                     iconDiv.appendChild(filename);
+                    iconDiv.appendChild(filesize);
                     fileList.appendChild(iconDiv);
                 });
             }
