@@ -605,6 +605,14 @@ def get_list(channel_name):
             pre_filelist = filechunk.split('\t')
             print("file list is ")
             print(pre_filelist)
+            cur.execute('SELECT filename FROM `files` WHERE id>=? ORDER BY id ASC', (0, ))
+            filerows = cur.fetchall()
+            data_file_list = list()
+            for fr in filerows:
+                print("fr now is %s" % fr)
+                data_file_list.append(fr[0])
+            print("data file lsit")
+            print(data_file_list)
             conn.commit()
             conn.close()
             file_list = list()
@@ -613,9 +621,11 @@ def get_list(channel_name):
                 if len(flparse) == 2:
                     print("file1: %s" % flparse[0])
                     print(flparse[1])
-                    file_list.append((flparse[0], flparse[1]))
+                    if flparse[0] in data_file_list:
+                        file_list.append((flparse[0], flparse[1]))
                 else:
-                    file_list.append((flparse[0], ))
+                    if flparse[0] in data_file_list:
+                        file_list.append((flparse[0], ))
             ret = (member_list, file_list)
             print("return value is ")
             print(ret)
