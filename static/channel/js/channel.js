@@ -34,9 +34,9 @@
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
                     var filename = document.createElement("P");
                     filename.innerHTML = file;
-                    var filesize = document.createElement("P");
-                    filesize.setAttribute("style", "line-height=0.8;");
-                    filesize.innerHTML = size;
+                    var filesize = document.createElement("H1");
+                    //filesize.setAttribute("style", "line-height=0.8; font-size=12px;");
+                    filesize.innerHTML = "size: " + size;
                     iconDiv.appendChild(downloadButtonWrap);
                     downloadButtonWrap.appendChild(downloadButton);
                     iconDiv.appendChild(deleteButtonWrap);
