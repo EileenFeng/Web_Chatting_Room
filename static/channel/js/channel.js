@@ -25,11 +25,11 @@
                     var iconDiv = document.createElement("DIV");
                     iconDiv.setAttribute("id", "icons");
                     var downloadButtonWrap = document.createElement("A");
-                    downloadButtonWrap.setAttribute("href", "http://localhost:5000/download_file/" + channel_name + "/" + file);
+                    downloadButtonWrap.setAttribute("href", "http://127.0.0.1:5000/download_file/" + channel_name + "/" + file);
                     var downloadButton = document.createElement("IMG");
                     downloadButton.setAttribute("src", "../static/channel/images/ic_insert_drive_file_black_48dp/web/ic_insert_drive_file_black_48dp_1x.png");
                     var deleteButtonWrap = document.createElement("A");
-                    deleteButtonWrap.setAttribute("href", "http://localhost:5000/delete_file/" + channel_name + "/" + file);
+                    deleteButtonWrap.setAttribute("href", "http://127.0.0.1:5000/delete_file/" + channel_name + "/" + file);
                     var deleteButton = document.createElement("IMG");
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
                     var filename = document.createElement("H2");
@@ -256,32 +256,4 @@ addAdminBtn.onclick = function() {
 
 topicBtn.onclick = function() {
     topicModal.style.display = "block";
-};
-/*
-span.onclick = function() {
-    modal.style.display = "none";
-}
-
-window.onclick = function(event) {
-    if (event.target == modal) {
-        modal.style.display = "none";
-    }
-}
-*/
-
-function downloadFile(filepath){
-    var channel_name = document.getElementById("channel_name").textContent;
-    var link = document.createElement("A");
-    link.download = filepath;
-    link.href = '/download_file/' + channel_name + '/' + filepath;
-    link.click();
-};
-
-function deleteFile(filepath){
-    var channel_name = document.getElementById("channel_name").textContent;
-    $.ajax
-    ({
-        type: "POST",
-        url: '/delete_file/' + channel_name + '/' + filepath,
-    });
 };

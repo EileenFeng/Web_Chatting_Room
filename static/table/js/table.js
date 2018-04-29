@@ -80,15 +80,15 @@
 	});
 
     /*==================================================================
-    [ Validate ]*/
-    var input = $('.validate-input .input100');
+    [ Validate 1]*/
+    var input1 = $('.validate-input-1 .input100');
 
-    $('.validate-form').on('submit',function(){
+    $('.validate-form-1').on('submit',function(){
     	var check = true;
 
-    	for(var i=0; i<input.length; i++) {
-    		if(validate(input[i]) == false){
-    			showValidate(input[i]);
+    	for(var i=0; i<input1.length; i++) {
+    		if(validate(input1[i]) == false){
+    			showValidate(input1[i]);
     			check=false;
     		}
     	}
@@ -97,11 +97,37 @@
     });
 
 
-    $('.validate-form .input100').each(function(){
+    $('.validate-form-1 .input100').each(function(){
     	$(this).focus(function(){
     		hideValidate(this);
     	});
     });
+
+    /*==================================================================
+    [ Validate ]*/
+    var input2 = $('.validate-input-2 .input100');
+
+    $('.validate-form-2').on('submit',function(){
+    	var check = true;
+
+    	for(var i=0; i<input2.length; i++) {
+    		if(validate(input2[i]) == false){
+    			showValidate(input2[i]);
+    			check=false;
+    		}
+    	}
+
+    	return check;
+    });
+
+
+    $('.validate-form-2 .input100').each(function(){
+    	$(this).focus(function(){
+    		hideValidate(this);
+    	});
+    });
+
+    /*================================================================== */
 
     function validate (input) {
     	if($(input).attr('type') == 'email' || $(input).attr('name') == 'email') {
@@ -131,25 +157,41 @@
 
 })(jQuery);
 
-function closeModal(){
-	var modal = document.getElementById('myModal');
-	modal.style.display = "none";
+function closeChannelModal(){
+	var channelModal = document.getElementById('channelModal');
+	channelModal.style.display = "none";
 };
 
-document.getElementById('myModal').style.display = "none";
-var modal = document.getElementById('myModal');
-var close = document.getElementsByClassName("close")[0];
-var btn = document.getElementById("add_chan_btn");
+function closeBlockModal(){
+	var blockModal = document.getElementById('blockModal');
+	blockModal.style.display = "none";
+};
 
-btn.onclick = function() {
-	modal.style.display = "block";
+document.getElementById('channelModal').style.display = "none";
+document.getElementById('blockModal').style.display = "none";
+var channelModal = document.getElementById('channelModal');
+var blockModal = document.getElementById('blockModal');
+var close = document.getElementsByClassName("close")[0];
+var channelBtn = document.getElementById("add_chan_btn");
+var blockBtn = document.getElementById("block_btn");
+
+channelBtn.onclick = function() {
+	channelModal.style.display = "block";
+}
+
+blockBtn.onclick = function() {
+	blockModal.style.display = "block";
 }
 /* close.onclick = function() {
 	modal.style.display = "none";
 }
 */
 window.onclick = function(event) {
-	if (event.target == modal) {
-		modal.style.display = "none";
+	if (event.target == channelModal) {
+		channelModal.style.display = "none";
 	}
+	if (event.target == blockModal) {
+		blockModal.style.display = "none";
+	}
+
 }

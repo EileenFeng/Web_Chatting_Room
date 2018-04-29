@@ -47,6 +47,7 @@
 								<td class="column100 column1" data-column="column1"> 
 								<p>User activities: </p>
 								<button id="add_chan_btn" onclick=addChannel()>Add channel</button> 
+								<button id="block_btn">Block User</button>
 								<a href="/logout"><button >Log out</button></a> </td>
 							</tr>
 						</tbody>
@@ -56,34 +57,59 @@
 		</div>
 	</div>
 
-	<div id="myModal" class="modal">
-	<div class="container-contact100">
-  		<div class="wrap-contact100">
-			<form class="contact100-form validate-form" id="form" method="POST" name="new_channel" action="/create_channel">
-				<span class="contact100-form-title">
-					Create new channel:
-				</span><br>
+	<div id="channelModal" class="modal">
+		<div class="container-contact100">
+	  		<div class="wrap-contact100">
+				<form class="contact100-form validate-form-1" id="form" method="POST" name="new_channel" action="/create_channel">
+					<span class="contact100-form-title">
+						Create new channel:
+					</span><br>
 
-				<div class="wrap-input100 validate-input" data-validate="Required">
-					<input class="input100" type="text" name="channel_name" placeholder="Channel Name">
-					<span class="focus-input100-1"></span>
-					<span class="focus-input100-2"></span>
-				</div>
+					<div class="wrap-input100 validate-input-1" data-validate="Required">
+						<input class="input100" type="text" name="channel_name" placeholder="Channel Name">
+						<span class="focus-input100-1"></span>
+						<span class="focus-input100-2"></span>
+					</div>
 
-				<div class="wrap-input100">
-					<input class="input100" type="text" name="channel_topic" placeholder="Channel Topic">
-					<span class="focus-input100-1"></span>
-					<span class="focus-input100-2"></span>
-				</div>
-				<div class="container-contact100-form-btn">
-					<button class="contact100-form-btn" type="submit">
-						Submit
-					</button>
-					<button class="contact100-form-btn" onClick=closeModal()>Close
-					</button>
-				</div>
-			</form>
+					<div class="wrap-input100">
+						<input class="input100" type="text" name="channel_topic" placeholder="Channel Topic">
+						<span class="focus-input100-1"></span>
+						<span class="focus-input100-2"></span>
+					</div>
+					<div class="container-contact100-form-btn">
+						<button class="contact100-form-btn" type="submit">
+							Submit
+						</button>
+						<button class="contact100-form-btn" onClick=closeChannelModal()>Close
+						</button>
+					</div>
+				</form>
+	  		</div>
   		</div>
+
+  	<div id="blockModal" class="modal">
+		<div class="container-contact100">
+	  		<div class="wrap-contact100">
+				<form class="contact100-form validate-form-2" id="form" method="POST" name="block_user" action="/block_user">
+					<span class="contact100-form-title">
+						Blocking:
+					</span><br>
+
+					<div class="wrap-input100 validate-input-2" data-validate="Required">
+						<input class="input100" type="text" name="channel_name" placeholder="User to be blocked">
+						<span class="focus-input100-1"></span>
+						<span class="focus-input100-2"></span>
+					</div>
+
+					<div class="container-contact100-form-btn">
+						<button class="contact100-form-btn" type="submit">
+							Submit
+						</button>
+						<button class="contact100-form-btn" onClick=closeBlockModal()>Close
+						</button>
+					</div>
+				</form>
+	  		</div>
   		</div>
 	</div>
 
