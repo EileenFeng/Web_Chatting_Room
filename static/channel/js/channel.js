@@ -32,11 +32,10 @@
                     deleteButtonWrap.setAttribute("href", "http://localhost:5000/delete_file/" + channel_name + "/" + file);
                     var deleteButton = document.createElement("IMG");
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
-                    var filename = document.createElement("P");
+                    var filename = document.createElement("H2");
                     filename.innerHTML = file;
                     var filesize = document.createElement("H1");
-                    //filesize.setAttribute("style", "line-height=0.8; font-size=12px;");
-                    filesize.innerHTML = "size: " + size;
+                    filesize.innerHTML = "size: " + size + "B";
                     iconDiv.appendChild(downloadButtonWrap);
                     downloadButtonWrap.appendChild(downloadButton);
                     iconDiv.appendChild(deleteButtonWrap);
