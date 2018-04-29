@@ -19,6 +19,7 @@
         if (Array.isArray(files)) {
             if (files.length > 0) {
                 files.forEach(function(fileTuple) {
+                    console.log(fileTuple);
                     var file = fileTuple[0];
                     var size = fileTuple[1];
                     var iconDiv = document.createElement("DIV");
@@ -34,13 +35,14 @@
                     var filename = document.createElement("P");
                     filename.innerHTML = file;
                     var filesize = document.createElement("P");
+                    filesize.setAttribute("style", "line-height=0.8;");
                     filesize.innerHTML = size;
                     iconDiv.appendChild(downloadButtonWrap);
                     downloadButtonWrap.appendChild(downloadButton);
                     iconDiv.appendChild(deleteButtonWrap);
                     deleteButtonWrap.appendChild(deleteButton);
-                    iconDiv.appendChild(filename);
                     iconDiv.appendChild(filesize);
+                    iconDiv.appendChild(filename);
                     fileList.appendChild(iconDiv);
                 });
             }
