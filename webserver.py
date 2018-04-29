@@ -853,6 +853,7 @@ def download_file(channelname, filename):
     urow = cur.fetchone()
     usr = urow[0]
     print(filename)
+    channel_nohash = channelname
     channelname = '#'+channelname
     try:
         cur.execute('SELECT channelname, filename FROM `files` WHERE channelname=? AND filename = ?', (channelname, filename))
@@ -894,36 +895,36 @@ def download_file(channelname, filename):
                                 try:
                                     decrypt_file(file_key, usr, filepath)
                                     flash(u'Successfully downloaded file ' + filename + '!', 'success')
-                                    return redirect('/channel/' + channelname)
+                                    return redirect('/channel/' + channel_nohash)
                                 except IOError as e:
                                     print ("Error: sending decrypted file in download failed")
                                     conn.commit()
                                     conn.close()
                                     flash(u'Could not downloaded file ' + filename + '!', 'error')
-                                    return redirect('/channel/' + channelname)       
+                                    return redirect('/channel/' + channel_nohash)       
                             except IOError as e:
                                 print("Error: read in file from stream in download failed")
                                 print(e)
                                 conn.commit()
                                 conn.close()
                                 flash(u'Could not downloaded file ' + filename + '!', 'error')
-                                return redirect('/channel/' + channelname)      
+                                return redirect('/channel/' + channel_nohash)      
                         else:
                             print("Error: Failed to get file from Tiny Web Server!")
                             conn.commit()
                             conn.close()
                             flash(u'Could not downloaded file ' + filename + '!', 'error')
-                            return redirect('/channel/' + channelname)      
+                            return redirect('/channel/' + channel_nohash)      
                     except IOError:
                         print("Error: Open file %s failed." % filepath)
                         conn.commit()
                         conn.close()
                         flash(u'Could not downloaded file ' + filename + '!', 'error')
-                        return redirect('/channel/' + channelname)      
+                        return redirect('/channel/' + channel_nohash)      
         conn.commit()
         conn.close()
         flash(u'Could not downloaded file ' + filename + '!', 'error')
-        return redirect('/channel/' + channelname)      
+        return redirect('/channel/' + channel_nohash)      
     except sqlite3.IntegrityError:
         conn.commit()
         conn.close()
