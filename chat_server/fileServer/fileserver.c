@@ -554,7 +554,14 @@ void serve_http(int socket) {
 	  strcat(curfile, entry->d_name);
 	  if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0){
 	    listfile[index] = (char*) malloc(100);
+	    struct stat st;
+	    stat(entry->d_name, &st);
+	    int filesize = st.st_size;
 	    fwrite(entry->d_name, 1, strlen(entry->d_name), stream);
+	    fwrite(";", 1, 1, stream);
+	    char file_size[30];
+	    sprintf(file_size, "%d", filesize);
+	    fwrite(file_size, sizeof(int), 1, stream);
 	    fwrite("\t", 1, 1, stream);
 	    fflush(stream);
 	    strncpy(listfile[index], entry->d_name, strlen(entry->d_name));

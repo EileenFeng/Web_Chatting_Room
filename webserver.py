@@ -602,11 +602,20 @@ def get_list(channel_name):
             for chunk in get_req.iter_content(chunk_size=BUFFER_SIZE):
                 filechunk += chunk
             print("file chunk is %s" % filechunk)
-            file_list = filechunk.split('\t')
+            pre_filelist = filechunk.split('\t')
             print("file list is ")
-            print(file_list)
+            print(pre_filelist)
             conn.commit()
             conn.close()
+            file_list = list()
+            for fl in pre_filelist:
+                flparse = fl.split(';')
+                if len(flparse) == 2:
+                    print("file1: %s" % flparse[0])
+                    print(flparse[1])
+                    file_list.append((flparse[0], flparse[1]))
+                else:
+                    file_list.append((flparse[0], ))
             ret = (member_list, file_list)
             print("return value is ")
             print(ret)
