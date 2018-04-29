@@ -731,6 +731,7 @@ def upload_file():
             flash('No file part')
             return 'Failed', 404
         file = request.files['file']
+        channel_name = request.form['channel_name']
         # if user does not select file, browser also
         # submit an empty part without filename
         print("filename is %s" % file.filename)
@@ -754,7 +755,7 @@ def upload_file():
                 print("???? watattaat?")
             file.save(filepath)
             print("5")
-            channel_name = request.form['channel_name']
+            
             print("6")
             outpath = ""
             try:
@@ -791,30 +792,36 @@ def upload_file():
                                 cur.execute('INSERT INTO `files` VALUES(NULL, ?, ?, ?)', (filename, cur_user, channel_name))
                                 conn.commit()
                                 conn.close()
-                                print("upload usccess")
-                                return 'Success', 200
+                                flash(u'Successfully uploaded file ' + filename + '!', 'success')
+                                return redirect('/channel/' + channel_name)  
                             except sqlite3.IntegrityError as e:
                                 print(e)
-                                return 'Fail', 404
+                                flash(u'Failed to upload file ' + filename + '!', 'error')
+                                return redirect('/channel/' + channel_name)  
                         else:
                             print("Error: Failed to post file to Tiny Web Server!")
                             print(post_req.status_code)
-                            return 'Fail', 404
+                            flash(u'Failed to upload file ' + filename + '!', 'error')
+                            return redirect('/channel/' + channel_name)  
                     except Exception as e:
                         print("Error: post request in 'upload' failed")
                         print(e)
-                        return 'Fail', 404
+                        flash(u'Failed to upload file ' + filename + '!', 'error')
+                        return redirect('/channel/' + channel_name)  
                 except Exception as e:
                     print("Error: opening file %s in 'upload' failed" % outpath)
                     print(e)
-                    return 'Fail', 404
+                    flash(u'Failed to upload file ' + filename + '!', 'error')
+                    return redirect('/channel/' + channel_name)  
                 except OSError as e:
                     print("Socket error: %d." % e.errno)
-                    return 'Fail', 404
+                    flash(u'Failed to upload file ' + filename + '!', 'error')
+                    return redirect('/channel/' + channel_name)  
             except Exception as e:
                 print("Error: encrypting file in 'upload' failed")
                 print(e)
-                return 'Fail', 404          
+                flash(u'Failed to upload file ' + filename + '!', 'error')
+                return redirect('/channel/' + channel_name)  
          
 #return '''
 '''
@@ -885,35 +892,42 @@ def download_file(channelname, filename):
                                         in_file.write(chunk)
                                 try:
                                     decrypt_file(file_key, usr, filepath)
-                                    return "Success", 200
+                                    flash(u'Successfully downloaded file ' + filename + '!', 'success')
+                                    return redirect('/channel/' + channelname)
                                 except IOError as e:
                                     print ("Error: sending decrypted file in download failed")
                                     conn.commit()
                                     conn.close()
-                                    return "Not Found1", 404             
+                                    flash(u'Could not downloaded file ' + filename + '!', 'error')
+                                    return redirect('/channel/' + channelname)       
                             except IOError as e:
                                 print("Error: read in file from stream in download failed")
                                 print(e)
                                 conn.commit()
                                 conn.close()
-                                return "Not Found2", 404
+                                flash(u'Could not downloaded file ' + filename + '!', 'error')
+                                return redirect('/channel/' + channelname)      
                         else:
                             print("Error: Failed to get file from Tiny Web Server!")
                             conn.commit()
                             conn.close()
-                            return "Not Found3", 404
+                            flash(u'Could not downloaded file ' + filename + '!', 'error')
+                            return redirect('/channel/' + channelname)      
                     except IOError:
                         print("Error: Open file %s failed." % filepath)
                         conn.commit()
                         conn.close()
-                        return "Not Found4", 404
+                        flash(u'Could not downloaded file ' + filename + '!', 'error')
+                        return redirect('/channel/' + channelname)      
         conn.commit()
         conn.close()
-        return "Not Found5", 404
+        flash(u'Could not downloaded file ' + filename + '!', 'error')
+        return redirect('/channel/' + channelname)      
     except sqlite3.IntegrityError:
         conn.commit()
         conn.close()
-        return "Not Found6", 404
+        flash(u'Could not downloaded file ' + filename + '!', 'error')
+        return redirect('/channel/' + channelname)  
 
 @app.route('/test_chat')
 def test_chat():
