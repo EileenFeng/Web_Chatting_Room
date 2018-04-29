@@ -19,6 +19,7 @@
         if (Array.isArray(files)) {
             if (files.length > 0) {
                 files.forEach(function(fileTuple) {
+                    console.log(fileTuple);
                     var file = fileTuple[0];
                     var size = fileTuple[1];
                     var iconDiv = document.createElement("DIV");
@@ -31,16 +32,16 @@
                     deleteButtonWrap.setAttribute("href", "http://localhost:5000/delete_file/" + channel_name + "/" + file);
                     var deleteButton = document.createElement("IMG");
                     deleteButton.setAttribute("src", "../static/channel/images/ic_delete_white_18dp/web/ic_delete_white_18dp_1x.png");
-                    var filename = document.createElement("P");
+                    var filename = document.createElement("H2");
                     filename.innerHTML = file;
-                    var filesize = document.createElement("P");
-                    filesize.innerHTML = size;
+                    var filesize = document.createElement("H1");
+                    filesize.innerHTML = "size: " + size + "B";
                     iconDiv.appendChild(downloadButtonWrap);
                     downloadButtonWrap.appendChild(downloadButton);
                     iconDiv.appendChild(deleteButtonWrap);
                     deleteButtonWrap.appendChild(deleteButton);
-                    iconDiv.appendChild(filename);
                     iconDiv.appendChild(filesize);
+                    iconDiv.appendChild(filename);
                     fileList.appendChild(iconDiv);
                 });
             }
