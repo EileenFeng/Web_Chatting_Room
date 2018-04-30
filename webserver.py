@@ -283,7 +283,7 @@ def check_not_block(chat_list, msgblock):
                 chat_list.append(msg)
     return chat_list
 
-@app.route('/get_blocklist', methods=['GET'])
+#@app.route('/get_blocklist', methods=['GET'])
 def get_blocklist():
     try:
         conn = connect_db()
@@ -292,27 +292,41 @@ def get_blocklist():
         row = cur.fetchone()
         if row[0] is not None:
             block_list = row[0].split(';')
-            print("block list")
-            print(block_list)
+            block_str = ""
+            for user in block_list:
+                block_str = block_str + user + ", "
             conn.commit()
             conn.close()
-            return jsonify(block_list)
+            #return jsonify(block_list)
+            return block_str[:-2]
         else:
             conn.commit()
             conn.close()
-            return jsonify(list())
+            #return jsonify(list())
+            return ""
     except Exception as e:
         print(e)
         conn.commit()
         conn.close()
-        return jsonify(list())
+        #return jsonify(list())
+        return ""
 
 @app.route('/block_user', methods=['POST', 'GET'])
 def block_user():
     block_target = utils.escape(request.form['username'])
     try:
+        if block_target == session['uid']:
+            flash(u'Cannot block yourself!', 'error')
+            return redirect('/')  
         conn = connect_db()
         cur = conn.cursor()
+
+        cur.execute('SELECT username FROM `user` WHERE username=?', (block_target,))
+        row = cur.fetchone()
+        if (row == None):
+            flash(u'User ' + block_target + 'does not exist!', 'error')
+            return redirect('/')  
+
         cur.execute('SELECT blocked FROM `user` WHERE id=?', (session['uid'], ))
         row = cur.fetchone()
         new_blocked = ""
@@ -321,16 +335,18 @@ def block_user():
         else:
             old_blocklist = row[0].split(';')
             if block_target not in old_blocklist:
-                newblocked = row[0] + ';' + block_target
-                print("new block list is " + new_blocked)
-                cur.execute('UPDATE `user` SET blocked=? WHERE id=?', (new_blocked, session['uid']))
+                new_blocked = row[0] + ';' + block_target
+            else:
                 conn.commit()
                 conn.close()
-                flash(u'Failed to block user ' + block_target + '!', 'error')
+                flash(u'User ' + block_target + ' is already blocked!', 'error')
                 return redirect('/')  
-            else:
-                flash(u'Successfully blocked user ' + block_target + '!', 'success')
-                return redirect('/')  
+        print("new block list is " + new_blocked)
+        cur.execute('UPDATE `user` SET blocked=? WHERE id=?', (new_blocked, session['uid']))
+        conn.commit()
+        conn.close()
+        flash(u'Successfully blocked user ' + block_target + '!', 'success')
+        return redirect('/')  
     except Exception as e:
         print(e)
         flash(u'Failed to block user ' + block_target + '!', 'error')
@@ -773,12 +789,15 @@ def channel(channel_name):
 def render_home_page(uid):
     user = get_user_from_id(uid)
     blocklist = get_blocklist()
+    print("BZBZBZ blocklist: ")
+    print(blocklist)
     return render_template('table.html', uid=uid, user=user['username'], blocklist=blocklist)
 
 def render_channel_table(uid, channel_data):
     user = get_user_from_id(uid)
+    blocklist = get_blocklist()
     #print("BZ channel_data: " + channel_data)
-    return render_template('table.html', uid=uid, user=user['username'], channel_data=json.dumps(channel_data))
+    return render_template('table.html', uid=uid, user=user['username'], channel_data=json.dumps(channel_data), blocklist=blocklist)
 
 def do_login(user):
     if user is not None:

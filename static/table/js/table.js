@@ -4,7 +4,6 @@
 	$.getJSON("/channels", function(channels) {
 		var tableBody = document.getElementById("table_body");
 		if (Array.isArray(channels)) {
-			console.log("isArray");
 			if (channels.length > 0) {
 				channels.forEach(function(channel) {
 					var channel_name = channel[0];
@@ -12,7 +11,6 @@
 					var isMember = channel[2];
 					var admins = channel[3];
 					var isAdmin = channel[4];
-					console.log("name: " + channel_name +", topic: " + channel_topic);
 					var row = tableBody.insertRow(tableBody.rows.length-1);
 					row.setAttribute("class", "row100");
 
@@ -24,7 +22,6 @@
 					var buttonOne = document.createElement("BUTTON");
 					buttonOne.innerHTML = channel_name;
 					if (isAdmin == 1){
-						console.log("STAR");
 						var star = document.createElement("IMG");
 						star.setAttribute("src", "/static/channel/images/ic_star_rate_black_18dp/web/ic_star_rate_black_18dp_2x.png");
 						cellOne.appendChild(star);
