@@ -403,7 +403,9 @@ def get_chats(channel_name, n):
                         check_not_block(result_list, msg_decrypted)
                     except cryptography.exceptions.InvalidSignature:
                         print("Invalid signature!")
-                except cryptography.fernet.InvalidToken as e:
+                #except cryptography.fernet.InvalidToken as e:
+                except Exception as e:
+                    print("watatatata")
                     print(e)
                     print("Not permitted to read channel logs")
             print("result chats")

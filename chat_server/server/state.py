@@ -249,11 +249,25 @@ class State:
                         if fromuser == user:
                             #continue
                         '''
-                        if fromuser in self.users[user].blocklist:
-                            self.notify(fromuser, "Blocked from sending messages to %s.\n" % (user))
+                        '''
+                        print(user)
+                        print(fromuser)
+                        conn = connect_db()
+                        cur = conn.cursor()
+                        cur.execute('SELECT blocked FROM `user`WHERE username=?', (user,))
+                        row = cur.fetchone()
+                        if row is not None:
+                            if row[0] is not None:
+                                blocklist = row[0].split(';')
+                                if fromuser not in blocklist:
+                                    msg = ChatFromMessage(fromuser,to,message)
+                        if fromuser in self.users[user.encode()].blocklist:
+                            #self.notify(fromuser, "Blocked from sending messages to %s.\n" % (user))
+                            print("User is blocked from this channel")
                         else:
                             msg = ChatFromMessage(fromuser,to,message)
                             #self.notify(user, msg.render())
+                    '''
                     #write to log
                     msg_log = fromuser + "> " + message + "\n"
                     print("msg log %s" % msg_log)
