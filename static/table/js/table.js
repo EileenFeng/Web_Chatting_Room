@@ -11,6 +11,7 @@
 					var channel_topic = channel[1];
 					var isMember = channel[2];
 					var admins = channel[3];
+					var isAdmin = channel[4];
 					console.log("name: " + channel_name +", topic: " + channel_topic);
 					var row = tableBody.insertRow(tableBody.rows.length-1);
 					row.setAttribute("class", "row100");
@@ -22,6 +23,12 @@
 					//linkOne.setAttribute("href", "/channel/" + channel_name.substring(1));
 					var buttonOne = document.createElement("BUTTON");
 					buttonOne.innerHTML = channel_name;
+					if (isAdmin == 1){
+						console.log("STAR");
+						var star = document.createElement("IMG");
+						star.setAttribute("src", "/static/channel/images/ic_star_rate_black_18dp/web/ic_star_rate_black_18dp_2x.png");
+						cellOne.appendChild(star);
+					}
 					cellOne.appendChild(linkOne);
 					linkOne.appendChild(buttonOne);
 

@@ -420,6 +420,7 @@ def get_channels(uid):
     cur.execute('SELECT username, banned FROM `user` WHERE id=?', (session['uid'], ))
     banned_chan = list()
     row = cur.fetchone()
+    username = ""
     try:
         username = row[0]
         if row[1] != None:
@@ -441,7 +442,10 @@ def get_channels(uid):
         topics = chan[1]
         members = chan[2].split(';')
         admins = chan[3].split(';')
+        is_admin = 0
         for i in range (0, len(admins)):
+            if (username == admins[i]):
+                is_admin = 1
             admins[i] = ' ' + admins[i]
         print("topics")
         print(topics)
@@ -452,7 +456,7 @@ def get_channels(uid):
         is_member = 0
         if username in members:
             is_member = 1
-        return_list.append((channel_name, topics, is_member, admins))
+        return_list.append((channel_name, topics, is_member, admins, is_admin))
     conn.commit()
     conn.close()
     print(return_list)
