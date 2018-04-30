@@ -309,9 +309,7 @@ def get_blocklist():
 
 @app.route('/block_user', methods=['POST', 'GET'])
 def block_user():
-    block_target = request.form['username']
-    #block_target = username
-    print("blocktarget is " + block_target)
+    block_target = utils.escape(request.form['username'])
     try:
         conn = connect_db()
         cur = conn.cursor()
@@ -505,7 +503,7 @@ def render_change_pwd():
 
 @app.route('/join/<channel_name>')
 def join_channel(channel_name):
-    channel_name = '#' + channel_name
+    channel_name = '#' + utils.escape(channel_name)
     try:
         conn = connect_db()
         cur = conn.cursor()
@@ -549,7 +547,7 @@ def leave_channel(channel_name):
     print("here")
     conn = connect_db()
     cur = conn.cursor()
-    channel_name = '#' + channel_name
+    channel_name = '#' + utils.escape(channel_name)
     try:
         cur.execute('SELECT username FROM `user` WHERE id=?', (session['uid'],))
         row = cur.fetchone()
@@ -587,9 +585,9 @@ def change_pwd():
     if request.method == 'GET':
         return render_change_pwd()
     elif request.method == 'POST':
-        username = request.form['username']
-        old_pwd = request.form['old_password']
-        new_pwd = request.form['new_password']
+        username = utils.escape(request.form['username'])
+        old_pwd = utils.escape(request.form['old_password'])
+        new_pwd = utils.escape(request.form['new_password'])
         conn = connect_db()
         cur = conn.cursor()
         cur.execute('SELECT password FROM `user` WHERE username= ?', (username,))
@@ -621,6 +619,7 @@ def chats(channel_name):
         print(ch)
         print("-----")
         #channel_name = request.form['channel_name']
+        channel_name = utils.escape(channel_name)
         return jsonify(get_chats(channel_name, 0))
     else:
         return jsonify("Error: not logged in!")
@@ -637,7 +636,7 @@ def channels():
 @app.route('/get_list/<channel_name>', methods=['GET'])
 def get_list(channel_name):
     member_list = get_members(channel_name)
-    channel_name = '#' + channel_name
+    channel_name = '#' + utils.escape(channel_name)
     print(member_list)
     try:
         conn = connect_db()
@@ -712,8 +711,9 @@ def get_list(channel_name):
 
 @app.route('/delete_file/<channel_name>/<file_name>')
 def delete_file(channel_name, file_name):
-    channel_nohash = channel_name
-    channel_name = '#' + channel_name
+    channel_nohash = utils.escape(channel_name)
+    channel_name = '#' + utils.escape(channel_name)
+    file_name = utils.escape(file_name)
     try:
         conn = connect_db()
         cur = conn.cursor()
@@ -760,6 +760,7 @@ def delete_file(channel_name, file_name):
 @app.route('/channel/<channel_name>')
 def channel(channel_name):
     if 'uid' in session:
+        channel_name = utils.escape(channel_name)
         user = get_user_from_id(session['uid'])
         return render_template("channel.html", channel_name = channel_name, user=user['username'])
     else:
@@ -812,7 +813,7 @@ def upload_file():
             flash('No file part')
             return 'Failed', 404
         file = request.files['file']
-        channel_name = request.form['channel_name']
+        channel_name = utils.escape(request.form['channel_name'])
         channel_nohash = channel_name[1:]
         print("Channel_name: " + channel_name)
         print("Channel_nohash:  " + channel_nohash)
@@ -824,7 +825,7 @@ def upload_file():
             return 'Failed', 404
         if file and allowed_file(file.filename):
             print("2")
-            filename = secure_filename(file.filename)
+            filename = utils.escape(secure_filename(file.filename))
             print("3")
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             print("4 %s" % filepath)
@@ -936,8 +937,8 @@ def download_file(channelname, filename):
     urow = cur.fetchone()
     usr = urow[0]
     print(filename)
-    channel_nohash = channelname
-    channelname = '#'+channelname
+    channel_nohash = utils.escape(channelname)
+    channelname = '#'+utils.escape(channelname)
     try:
         cur.execute('SELECT channelname, filename FROM `files` WHERE channelname=? AND filename = ?', (channelname, filename))
         row = cur.fetchone()
@@ -945,7 +946,7 @@ def download_file(channelname, filename):
             print(row[0])
             print(row[1])
             if row[1] is not None:
-                filepath = channelname + '/'+filename
+                filepath = channelname + '/'+utils.escape(filename)
                 if filename in row[1]:
                     try:
                         #GET to Tiny Web Server
@@ -1024,8 +1025,8 @@ def create_account():
         print("create account render")
         return render_create_account()
     elif request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = utils.escape(request.form['username'])
+        password = utils.escape(request.form['password'])
         print(username,password)
         user = create_user(username, password)
         if user != None:
@@ -1035,9 +1036,9 @@ def create_account():
 
 @app.route('/add_admin', methods=['POST'])
 def add_admin():
-    channel_nohash = request.form['channel_name']
+    channel_nohash = utils.escape(request.form['channel_name'])
     channel_name =  '#' + channel_nohash
-    padmin = request.form['username']
+    padmin = utils.escape(request.form['username'])
     conn = connect_db()
     cur = conn.cursor()
     try: 
@@ -1085,7 +1086,7 @@ def add_admin():
 
 @app.route('/ban_user', methods=['POST'])
 def ban_user():
-    channel_nohash = request.form['channel_name']
+    channel_nohash = utils.escape(request.form['channel_name'])
     channel_name =  channel_nohash
     banned_user = request.form['username']
     print("banned_user is %s" %banned_user)
@@ -1175,8 +1176,8 @@ def ban_user():
 @app.route('/create_channel', methods=['POST'])
 def create_channel():
     print('in create channel')
-    channame = request.form['channel_name']
-    topic = request.form['channel_topic']
+    channame = utils.escape(request.form['channel_name'])
+    topic = utils.escape(request.form['channel_topic'])
     print(channame)
     print(topic)
     channame = utils.escape(channame)
@@ -1185,7 +1186,7 @@ def create_channel():
     cur = conn.cursor()
     try:
         uid = session['uid']
-        cur.execute('SELECT username FROM `user` WHERE id=\'%s\'' % uid)
+        cur.execute('SELECT username FROM `user` WHERE id=?', (uid,))
         row = cur.fetchone()
         print(len(row))
         admin_name = row[0]
@@ -1231,9 +1232,9 @@ def create_channel():
 
 @app.route('/change_topic', methods=['POST'])
 def change_topics():
-    channel_nohash = request.form['channel_name']
+    channel_nohash = utils.escape(request.form['channel_name'])
     channel_name = '#' + channel_nohash
-    new_topic = request.form['new_topic']
+    new_topic = utils.escape(request.form['new_topic'])
     new_topic = utils.escape(new_topic)
     current_user = get_user_from_id(session['uid'])
     conn = connect_db()
@@ -1283,8 +1284,8 @@ def login():
     if request.method == 'GET':
         return render_login_page()
     elif request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = utils.escape(request.form['username'])
+        password = utils.escape(request.form['password'])
         user = get_user_from_username_and_password(username, password)
         return do_login(user)
 
