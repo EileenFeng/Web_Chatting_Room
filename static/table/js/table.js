@@ -169,29 +169,17 @@ function closeBlockModal(){
 
 document.getElementById('channelModal').style.display = "none";
 document.getElementById('blockModal').style.display = "none";
+
 var channelModal = document.getElementById('channelModal');
 var blockModal = document.getElementById('blockModal');
-var close = document.getElementsByClassName("close")[0];
+
 var channelBtn = document.getElementById("add_chan_btn");
-var blockBtn = document.getElementById("block_btn");
+var blockUserBtn = document.getElementById("block_user_btn");
 
 channelBtn.onclick = function() {
-	channelModal.style.display = "block";
-}
+    channelModal.style.display = "block";
+};
 
-blockBtn.onclick = function() {
-	blockModal.style.display = "block";
-}
-/* close.onclick = function() {
-	modal.style.display = "none";
-}
-*/
-window.onclick = function(event) {
-	if (event.target == channelModal) {
-		channelModal.style.display = "none";
-	}
-	if (event.target == blockModal) {
-		blockModal.style.display = "none";
-	}
-
-}
+blockUserBtn.onclick = function() {
+    blockModal.style.display = "block";
+};

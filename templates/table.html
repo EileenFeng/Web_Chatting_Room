@@ -4,27 +4,27 @@
 	<title>Squirrel Chat</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="icon" type="image/png" href="static/table/images/icons/favicon.ico"/>
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="static/table/vendor/bootstrap/css/bootstrap.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="static/table/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" type="text/css" href="static/login/fonts/Linearicons-Free-v1.0.0/icon-font.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="static/table/vendor/animate/animate.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="static/table/vendor/css-hamburgers/hamburgers.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="static/table/vendor/animsition/css/animsition.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="static/table/vendor/select2/select2.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="static/table/vendor/perfect-scrollbar/perfect-scrollbar.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="static/table/css/util.css">
 	<link rel="stylesheet" type="text/css" href="static/table/css/table.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 </head>
 <body>
 	<div class="limiter">
@@ -45,84 +45,90 @@
 						<tbody id="table_body">
 							<tr class="row100">
 								<td class="column100 column1" data-column="column1"> 
-								<p>User activities: </p>
-								<button id="add_chan_btn" onclick=addChannel()>Add channel</button> 
-								<button id="block_btn">Block User</button>
-								<a href="/logout"><button >Log out</button></a> </td>
-							</tr>
-						</tbody>
-					</table>
+									<p>User activities: </p>
+									<button id="add_chan_btn">Add channel</button> 
+									<button id="block_user_btn">Block User</button>
+									<a href="/logout"><button >Log out</button></a> </td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
 
-	<div id="channelModal" class="modal">
-		<div class="container-contact100">
-	  		<div class="wrap-contact100">
-				<form class="contact100-form validate-form-1" id="form" method="POST" name="new_channel" action="/create_channel">
-					<span class="contact100-form-title">
-						Create new channel:
-					</span><br>
+		<div id="channelModal" class="modal">
+			<div class="container-contact100">
+				<div class="wrap-contact100">
+					<form class="contact100-form validate-form-1" id="form" method="POST" name="new_channel" action="/create_channel">
+						<span class="contact100-form-title">
+							Create new channel:
+						</span><br>
 
-					<div class="wrap-input100 validate-input-1" data-validate="Required">
-						<input class="input100" type="text" name="channel_name" placeholder="Channel Name">
-						<span class="focus-input100-1"></span>
-						<span class="focus-input100-2"></span>
-					</div>
+						<div class="wrap-input100 validate-input-1" data-validate="Required">
+							<input class="input100" type="text" name="channel_name" placeholder="Channel Name">
+							<span class="focus-input100-1"></span>
+							<span class="focus-input100-2"></span>
+						</div>
 
-					<div class="wrap-input100">
-						<input class="input100" type="text" name="channel_topic" placeholder="Channel Topic">
-						<span class="focus-input100-1"></span>
-						<span class="focus-input100-2"></span>
-					</div>
-					<div class="container-contact100-form-btn">
-						<button class="contact100-form-btn" type="submit">
-							Submit
-						</button>
-						<button class="contact100-form-btn" onClick=closeChannelModal()>Close
-						</button>
-					</div>
-				</form>
-	  		</div>
-  		</div>
+						<div class="wrap-input100">
+							<input class="input100" type="text" name="channel_topic" placeholder="Channel Topic">
+							<span class="focus-input100-1"></span>
+							<span class="focus-input100-2"></span>
+						</div>
+						<div class="container-contact100-form-btn">
+							<button class="contact100-form-btn" type="submit" formaction="/create_channel">
+								Submit
+							</button>
+							<button class="contact100-form-btn" onClick=closeChannelModal()>Close
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<div id="blockModal" class="modal">
+			<div class="container-contact100">
+				<div class="wrap-contact100">
+					<form class="contact100-form validate-form-2" id="form" method="POST" name="block_user" action="/block_user">
+						<span class="contact100-form-title">
+							Blocklist Controller
+						</span><br>
 
-  	<div id="blockModal" class="modal">
-		<div class="container-contact100">
-	  		<div class="wrap-contact100">
-				<form class="contact100-form validate-form-2" id="form" method="POST" name="block_user" action="/block_user">
-					<span class="contact100-form-title">
-						Blocking:
-					</span><br>
+						<div> 
+						<p>Blocked users: {{blocklist}}</p>
+						</div>
 
-					<div class="wrap-input100 validate-input-2" data-validate="Required">
-						<input class="input100" type="text" name="channel_name" placeholder="User to be blocked">
-						<span class="focus-input100-1"></span>
-						<span class="focus-input100-2"></span>
-					</div>
+						<p>Add user to blocklist: </p>
+						<div class="wrap-input100 validate-input-2" data-validate="Required">
 
-					<div class="container-contact100-form-btn">
-						<button class="contact100-form-btn" type="submit">
-							Submit
-						</button>
-						<button class="contact100-form-btn" onClick=closeBlockModal()>Close
-						</button>
-					</div>
-				</form>
-	  		</div>
-  		</div>
-	</div>
+							<input class="input100" type="text" name="username" placeholder="Username">
+							<span class="focus-input100-1"></span>
+							<span class="focus-input100-2"></span>
+						</div>
 
-<!--===============================================================================================-->
-	<script src="static/table/vendor/jquery/jquery-3.2.1.min.js"></script><!--===============================================================================================-->
-	<script src="static/table/vendor/animsition/js/animsition.min.js"></script>
-<!--===============================================================================================-->
-	<script src="static/table/vendor/bootstrap/js/popper.js"></script>
-	<script src="static/table/vendor/bootstrap/js/bootstrap.min.js"></script>
-<!--===============================================================================================-->
-	<script src="static/table/vendor/select2/select2.min.js"></script>
-<!--===============================================================================================-->
-	<script src="static/table/js/table.js"></script>
+						<div class="container-contact100-form-btn">
+							<button class="contact100-form-btn" type="submit" formaction="/block_user">
+								Block
+							</button>
+							<button class="contact100-form-btn" onClick=closeBlockModal() type="button">Close
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
 
-</body>
-</html>
+		<!--===============================================================================================-->
+		<script src="static/table/vendor/jquery/jquery-3.2.1.min.js"></script><!--===============================================================================================-->
+		<script src="static/table/vendor/animsition/js/animsition.min.js"></script>
+		<!--===============================================================================================-->
+		<script src="static/table/vendor/bootstrap/js/popper.js"></script>
+		<script src="static/table/vendor/bootstrap/js/bootstrap.min.js"></script>
+		<!--===============================================================================================-->
+		<script src="static/table/vendor/select2/select2.min.js"></script>
+		<!--===============================================================================================-->
+		<script src="static/table/js/table.js"></script>
+
+	</body>
+	</html>

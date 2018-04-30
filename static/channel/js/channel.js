@@ -241,7 +241,9 @@ document.getElementById('topic_modal').style.display = "none";
 var banModal = document.getElementById('ban_modal');
 var adminModal = document.getElementById('admin_modal');
 var topicModal = document.getElementById('topic_modal');
+
 var span = document.getElementsByClassName("close")[0];
+
 var banUserBtn = document.getElementById("ban_user_btn");
 var addAdminBtn = document.getElementById("add_admin_btn");
 var topicBtn = document.getElementById("change_topic_btn");

@@ -284,7 +284,7 @@ def check_not_block(chat_list, msgblock):
     return chat_list
 
 @app.route('/get_blocklist', methods=['GET'])
-def get_block_list():
+def get_blocklist():
     try:
         conn = connect_db()
         cur = conn.cursor()
@@ -307,10 +307,10 @@ def get_block_list():
         conn.close()
         return jsonify(list())
 
-@app.route('/block_user/<username>', methods=['POST', 'GET'])
-def block_user(username):
-    #block_target = request.form['username']
-    block_target = username
+@app.route('/block_user', methods=['POST', 'GET'])
+def block_user():
+    block_target = request.form['username']
+    #block_target = username
     print("blocktarget is " + block_target)
     try:
         conn = connect_db()
@@ -328,10 +328,15 @@ def block_user(username):
                 cur.execute('UPDATE `user` SET blocked=? WHERE id=?', (new_blocked, session['uid']))
                 conn.commit()
                 conn.close()
-            return "Success", 200
+                flash(u'Failed to block user ' + block_target + '!', 'error')
+                return redirect('/')  
+            else:
+                flash(u'Successfully blocked user ' + block_target + '!', 'success')
+                return redirect('/')  
     except Exception as e:
         print(e)
-        return "Fail", 404
+        flash(u'Failed to block user ' + block_target + '!', 'error')
+        return redirect('/')  
     
 def get_chats(channel_name, n):
     conn = connect_db()
@@ -755,18 +760,15 @@ def delete_file(channel_name, file_name):
 @app.route('/channel/<channel_name>')
 def channel(channel_name):
     if 'uid' in session:
-        #chanlist = get_list(channel_name)
-        #print("lists for %s is" % channel_name)
-        #print(chanlist)
         user = get_user_from_id(session['uid'])
-        
         return render_template("channel.html", channel_name = channel_name, user=user['username'])
     else:
         return redirect('/login')
 
 def render_home_page(uid):
     user = get_user_from_id(uid)
-    return render_template('table.html', uid=uid, user=user['username'])
+    blocklist = get_blocklist()
+    return render_template('table.html', uid=uid, user=user['username'], blocklist=blocklist)
 
 def render_channel_table(uid, channel_data):
     user = get_user_from_id(uid)
