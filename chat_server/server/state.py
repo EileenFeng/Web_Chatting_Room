@@ -2,6 +2,7 @@
 from user import *
 from channel import *
 from messages import *
+from jinja2 import utils
 import sqlite3
 import csv
 import sys
@@ -309,7 +310,7 @@ class State:
                         )
         key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
         fernet = Fernet(key)
-        log_str = self.channels[channel].current_log
+        log_str = utils.escape(self.channels[channel].current_log)
         encrypted_log = fernet.encrypt(log_str.encode())
         encrypted_info = ""
         with open(log_name, 'wb') as logfile:
