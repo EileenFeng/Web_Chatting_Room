@@ -260,12 +260,13 @@ def check_not_block(chat_list, msgblock):
     for msg in msgs:
         print("single msg")
         print(msg)
-        split = msg.split('>', 1)
+        split = msg.split(utils.escape('>'), 1)
         print("split")
         print(split)
         if len(split) == 2:
             sentuser = split[0]
             chat = split[1]
+            msg = sentuser + ': ' + chat
             print("sent by %s" % sentuser)
             print("msg is %s" % chat)
             cur.execute('SELECT blocked FROM `user` WHERE username = ?', (username,))
@@ -273,7 +274,7 @@ def check_not_block(chat_list, msgblock):
             print("row2")
             print(row2[0])
             if row2[0] is None:
-                chat_list.append(msg)
+                chat_list.append(utils.escape(msg))
                 continue
             blocked_list = row2[0].split(';')
             print("blocked list of %s is" % sentuser)
@@ -315,7 +316,7 @@ def get_blocklist():
 def block_user():
     block_target = utils.escape(request.form['username'])
     try:
-        if block_target == session['uid']:
+        if block_target == get_user_from_id(session['uid']):
             flash(u'Cannot block yourself!', 'error')
             return redirect('/')  
         conn = connect_db()
@@ -324,7 +325,7 @@ def block_user():
         cur.execute('SELECT username FROM `user` WHERE username=?', (block_target,))
         row = cur.fetchone()
         if (row == None):
-            flash(u'User ' + block_target + 'does not exist!', 'error')
+            flash(u'User ' + block_target + ' does not exist!', 'error')
             return redirect('/')  
 
         cur.execute('SELECT blocked FROM `user` WHERE id=?', (session['uid'], ))
