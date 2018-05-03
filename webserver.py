@@ -367,6 +367,7 @@ def get_chats(channel_name, n):
         conn.commit()
         conn.close()
         result_list = list()
+        print(len(rows))
         #did not write salt!!!
         if len(rows) != 0:
             for r in rows:
