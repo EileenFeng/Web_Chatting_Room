@@ -367,6 +367,7 @@ def get_chats(channel_name, n):
         conn.commit()
         conn.close()
         result_list = list()
+        print(len(rows))
         #did not write salt!!!
         if len(rows) != 0:
             for r in rows:
@@ -596,7 +597,8 @@ def leave_channel(channel_name):
                 cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (new_members, channel_name))
                 conn.commit()
                 conn.close()
-                return 'Success', 200
+                return redirect('/')
+                #return 'Success', 200
     except sqlite3.IntegrityError as e:
         print(e)
         conn.commit()
@@ -611,28 +613,31 @@ def change_pwd():
         username = utils.escape(request.form['username'])
         old_pwd = utils.escape(request.form['old_password'])
         new_pwd = utils.escape(request.form['new_password'])
-        conn = connect_db()
-        cur = conn.cursor()
-        cur.execute('SELECT password FROM `user` WHERE username= ?', (username,))
-        db_pwd = cur.fetchone()[0].encode()
-        #TO-DO: add encryption here
-        #encrypted_oldpwd = bcrypt.hashpw(old_pwd.encode(), bcrypt.gensalt())
-        encrypted_newpwd = bcrypt.hashpw(new_pwd.encode(), bcrypt.gensalt())
-
         try:
-            if bcrypt.checkpw(old_pwd.encode(), db_pwd):
-                cur.execute('UPDATE `user` SET password=? WHERE username=?', (encrypted_newpwd, username))            
-            else:
+            conn = connect_db()
+            cur = conn.cursor()
+            cur.execute('SELECT password FROM `user` WHERE username= ?', (username,))
+            db_pwd = cur.fetchone()[0].encode()
+            #TO-DO: add encryption here
+            #encrypted_oldpwd = bcrypt.hashpw(old_pwd.encode(), bcrypt.gensalt())
+            encrypted_newpwd = bcrypt.hashpw(new_pwd.encode(), bcrypt.gensalt())
+
+            try:
+                if bcrypt.checkpw(old_pwd.encode(), db_pwd):
+                    cur.execute('UPDATE `user` SET password=? WHERE username=?', (encrypted_newpwd, username))            
+                else:
+                    conn.commit()
+                    conn.close()
+                    return render_change_pwd()
+            except Exception, e:
                 conn.commit()
                 conn.close()
                 return render_change_pwd()
-        except Exception, e:
             conn.commit()
             conn.close()
+            return redirect('/login')
+        except Exception as e:
             return render_change_pwd()
-        conn.commit()
-        conn.close()
-        return redirect('/login')
 
 @app.route('/chats/<channel_name>', methods=['GET'])
 def chats(channel_name):
@@ -1262,7 +1267,10 @@ def change_topics():
     channel_name = '#' + channel_nohash
     new_topic = utils.escape(request.form['new_topic'])
     new_topic = utils.escape(new_topic)
-    current_user = get_user_from_id(session['uid'])
+    get_user = get_user_from_id(session['uid'])
+    current_user = get_user['username']
+    print("wata")
+    print(current_user)
     conn = connect_db()
     cur = conn.cursor()
     try:

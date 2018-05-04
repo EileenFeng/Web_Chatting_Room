@@ -273,11 +273,11 @@ class State:
                     msg_log = fromuser + "> " + message + "\n"
                     print("msg log %s" % msg_log)
                     print("count is %d" %self.channels[to].msg_count)
-                    if (self.channels[to].msg_count >= 2):
-                        print("count is %d" %self.channels[to].msg_count)
-                        self.write_log(to)
+                    #if (self.channels[to].msg_count >= 2):
+                    print("count is %d" %self.channels[to].msg_count)
+                    self.write_log(to, msg_log)
                     self.channels[to].current_log = self.channels[to].current_log + msg_log
-                    self.channels[to].msg_count += 1
+                    #self.channels[to].msg_count += 1
                     
                 else:
                     self.notify(fromuser, "Error: Not a member of channel!\n")
@@ -296,7 +296,7 @@ class State:
             else:
                 self.notify(fromuser, "Error: Target user is not logged in or does not exist\n")
 
-    def write_log(self, channel):
+    def write_log(self, channel, msg_log):
         timestamp = str(int(round(time.time() * 1000)))
         log_name = "logs/log-" + channel[1:] + "-" + timestamp + ".log"
         #Fernet
@@ -310,7 +310,8 @@ class State:
                         )
         key = base64.urlsafe_b64encode(kdf.derive(keyconfig.part3_password.encode()))
         fernet = Fernet(key)
-        log_str = utils.escape(self.channels[channel].current_log)
+        #log_str = utils.escape(self.channels[channel].current_log)
+        log_str = utils.escape(msg_log)
         encrypted_log = fernet.encrypt(log_str.encode())
         encrypted_info = ""
         with open(log_name, 'wb') as logfile:
