@@ -561,6 +561,7 @@ void serve_http(int socket) {
 	    fwrite(";", 1, 1, stream);
 	    char file_size[30];
 	    sprintf(file_size, "%d", filesize);
+	    //printf("file size is %s\n", file_size);
 	    fwrite(file_size, sizeof(int), 1, stream);
 	    fwrite("\t", 1, 1, stream);
 	    fflush(stream);

@@ -597,7 +597,8 @@ def leave_channel(channel_name):
                 cur.execute('UPDATE `channels` SET members=? WHERE channelname=?', (new_members, channel_name))
                 conn.commit()
                 conn.close()
-                return 'Success', 200
+                return redirect('/')
+                #return 'Success', 200
     except sqlite3.IntegrityError as e:
         print(e)
         conn.commit()
@@ -1263,7 +1264,10 @@ def change_topics():
     channel_name = '#' + channel_nohash
     new_topic = utils.escape(request.form['new_topic'])
     new_topic = utils.escape(new_topic)
-    current_user = get_user_from_id(session['uid'])
+    get_user = get_user_from_id(session['uid'])
+    current_user = get_user['username']
+    print("wata")
+    print(current_user)
     conn = connect_db()
     cur = conn.cursor()
     try:
