@@ -316,7 +316,7 @@ def get_blocklist():
 def block_user():
     block_target = utils.escape(request.form['username'])
     try:
-        if block_target == session['uid']:
+        if block_target == get_user_from_id(session['uid']):
             flash(u'Cannot block yourself!', 'error')
             return redirect('/')  
         conn = connect_db()
@@ -325,7 +325,7 @@ def block_user():
         cur.execute('SELECT username FROM `user` WHERE username=?', (block_target,))
         row = cur.fetchone()
         if (row == None):
-            flash(u'User ' + block_target + 'does not exist!', 'error')
+            flash(u'User ' + block_target + ' does not exist!', 'error')
             return redirect('/')  
 
         cur.execute('SELECT blocked FROM `user` WHERE id=?', (session['uid'], ))
