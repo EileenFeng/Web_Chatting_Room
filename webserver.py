@@ -613,28 +613,31 @@ def change_pwd():
         username = utils.escape(request.form['username'])
         old_pwd = utils.escape(request.form['old_password'])
         new_pwd = utils.escape(request.form['new_password'])
-        conn = connect_db()
-        cur = conn.cursor()
-        cur.execute('SELECT password FROM `user` WHERE username= ?', (username,))
-        db_pwd = cur.fetchone()[0].encode()
-        #TO-DO: add encryption here
-        #encrypted_oldpwd = bcrypt.hashpw(old_pwd.encode(), bcrypt.gensalt())
-        encrypted_newpwd = bcrypt.hashpw(new_pwd.encode(), bcrypt.gensalt())
-
         try:
-            if bcrypt.checkpw(old_pwd.encode(), db_pwd):
-                cur.execute('UPDATE `user` SET password=? WHERE username=?', (encrypted_newpwd, username))            
-            else:
+            conn = connect_db()
+            cur = conn.cursor()
+            cur.execute('SELECT password FROM `user` WHERE username= ?', (username,))
+            db_pwd = cur.fetchone()[0].encode()
+            #TO-DO: add encryption here
+            #encrypted_oldpwd = bcrypt.hashpw(old_pwd.encode(), bcrypt.gensalt())
+            encrypted_newpwd = bcrypt.hashpw(new_pwd.encode(), bcrypt.gensalt())
+
+            try:
+                if bcrypt.checkpw(old_pwd.encode(), db_pwd):
+                    cur.execute('UPDATE `user` SET password=? WHERE username=?', (encrypted_newpwd, username))            
+                else:
+                    conn.commit()
+                    conn.close()
+                    return render_change_pwd()
+            except Exception, e:
                 conn.commit()
                 conn.close()
                 return render_change_pwd()
-        except Exception, e:
             conn.commit()
             conn.close()
+            return redirect('/login')
+        except Exception as e:
             return render_change_pwd()
-        conn.commit()
-        conn.close()
-        return redirect('/login')
 
 @app.route('/chats/<channel_name>', methods=['GET'])
 def chats(channel_name):
