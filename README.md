@@ -1,4 +1,4 @@
-- A chatting website with pretty interface and security protections
+- A chatting website with pretty interface and security protections written in python and C
 - Allows chatting in private, groups, and uploading files
 - All chats (messages) and files are encrypted during transmission
 - Backends contributed by Eileen Feng, front end contributed by Stephanie Cao (hanhphuc296@gmail.com)
